@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Connexion — Paris Colère</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: Georgia, "Iowan Old Style", Palatino, serif;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: #f4efe6;
+            color: #1c1915;
+        }
+        main {
+            width: min(24rem, calc(100% - 2rem));
+            padding: 2rem;
+            background: #fffdf8;
+            border: 1px solid #e4d8c4;
+        }
+        h1 {
+            margin: 0 0 0.25rem;
+            font-size: 1.75rem;
+            font-weight: 500;
+        }
+        p {
+            margin: 0 0 1.5rem;
+            color: #5c5348;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.35rem;
+            font-size: 0.9rem;
+        }
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 1rem;
+            padding: 0.65rem 0.75rem;
+            border: 1px solid #cfc3b0;
+            background: #fff;
+            color: #1c1915;
+            caret-color: #1c1915;
+            font: inherit;
+        }
+        button {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 0;
+            background: #1c1915;
+            color: #fffdf8;
+            font: inherit;
+            cursor: pointer;
+        }
+        .error {
+            margin-bottom: 1rem;
+            color: #8c2f2f;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Paris Colère</h1>
+    <p>Administration</p>
+
+    {% if error %}
+        <div class="error">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+    {% endif %}
+
+    <form method="post" action="{{ path('app_login') }}">
+        <label for="username">E-mail</label>
+        <input type="email" id="username" name="_username" value="{{ last_username }}" required autofocus autocomplete="username">
+
+        <label for="password">Mot de passe</label>
+        <input type="password" id="password" name="_password" required autocomplete="current-password">
+
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+        <button type="submit">Se connecter</button>
+    </form>
+</main>
+</body>
+</html>

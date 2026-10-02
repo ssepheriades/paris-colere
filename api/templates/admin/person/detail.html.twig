@@ -1,0 +1,47 @@
+{% extends '@EasyAdmin/crud/detail.html.twig' %}
+
+{% block main %}
+    {{ parent() }}
+
+    {% form_theme functionsForm 'bootstrap_5_layout.html.twig' %}
+    <section class="content-panel mt-3">
+        <div class="content-panel-header">
+            <div class="content-panel-header-title">Fonctions</div>
+        </div>
+        <div class="content-panel-body with-padding">
+            {{ form_start(functionsForm) }}
+                <div id="person-functions"
+                     data-index="{{ functionsForm.personLegalEntities|length }}"
+                     data-prototype="{{ form_widget(functionsForm.personLegalEntities.vars.prototype)|e('html_attr') }}">
+                    {% for child in functionsForm.personLegalEntities %}
+                        <div class="border rounded p-3 mb-3 person-function">
+                            {{ form_widget(child) }}
+                            <button type="button" class="btn btn-link text-danger px-0 js-remove-function">Retirer</button>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn btn-secondary" id="add-person-function">Ajouter une fonction</button>
+                <button type="submit" class="btn btn-primary">Enregistrer les fonctions</button>
+                {{ form_widget(functionsForm._token) }}
+            {{ form_end(functionsForm, {render_rest: false}) }}
+        </div>
+    </section>
+    <script>
+        const collection = document.getElementById('person-functions');
+        document.getElementById('add-person-function').addEventListener('click', () => {
+            const index = Number(collection.dataset.index);
+            const wrapper = document.createElement('div');
+            wrapper.className = 'border rounded p-3 mb-3 person-function';
+            wrapper.innerHTML = collection.dataset.prototype.replace(/__name__/g, index)
+                + '<button type="button" class="btn btn-link text-danger px-0 js-remove-function">Retirer</button>';
+            collection.append(wrapper);
+            collection.dataset.index = String(index + 1);
+        });
+        collection.addEventListener('click', (event) => {
+            const button = event.target.closest('.js-remove-function');
+            if (button) {
+                button.closest('.person-function').remove();
+            }
+        });
+    </script>
+{% endblock %}

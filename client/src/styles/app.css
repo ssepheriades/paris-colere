@@ -1,0 +1,22 @@
+/*
+ * Vuetify only sets overflow-x: hidden on html. In Chrome’s device toolbar
+ * that leaves overflow-y at visible, and the emulated width is then the
+ * window width: the page is laid out too wide and clipped. Edge does not
+ * do this. Pairing both axes avoids it.
+ */
+html {
+  overflow-x: hidden;
+  overflow-y: auto;
+  font-size: 16px;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+.v-application,
+.v-application__wrap,
+.v-main,
+.v-main__scroller,
+.v-container {
+  min-width: 0;
+  max-width: 100%;
+}

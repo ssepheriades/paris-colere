@@ -1,0 +1,21 @@
+/**
+ * src/styles/settings.scss
+ *
+ * Configures SASS variables and Vuetify overwrites
+ */
+
+@use 'vuetify/settings' with (
+  $body-font-family: ('Source Sans 3', sans-serif),
+  $heading-font-family: ('Fraunces', serif)
+);
+
+.v-application {
+  --v-font-body: 'Source Sans 3', sans-serif;
+  --v-font-heading: 'Fraunces', serif;
+}
+
+.v-card-title,
+.page-title {
+  font-family: 'Fraunces', serif;
+  letter-spacing: -0.02em;
+}
