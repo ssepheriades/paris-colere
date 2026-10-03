@@ -36,8 +36,27 @@
         </v-avatar>
 
         <div>
-          <p class="text-overline text-primary mb-1">Fiche</p>
-          <h1 class="page-title person-name">{{ personName(store.person) }}</h1>
+          <div class="person-heading">
+            <h1 class="page-title person-name">{{ personName(store.person) }}</h1>
+            <v-btn
+              v-if="wikiHref"
+              class="wiki-btn"
+              color="primary"
+              :href="wikiHref"
+              rel="noopener noreferrer"
+              size="small"
+              target="_blank"
+              variant="outlined"
+            >
+              Wiki
+            </v-btn>
+          </div>
+          <p v-if="store.person.shortDescription" class="person-summary">
+            {{ store.person.shortDescription }}
+          </p>
+          <p v-if="store.person.bio" class="person-bio">
+            {{ store.person.bio }}
+          </p>
         </div>
       </header>
 
@@ -89,13 +108,6 @@
                   En cours
                 </v-chip>
 
-                <v-chip
-                  v-if="mandate.legalEntity.type"
-                  size="small"
-                  variant="outlined"
-                >
-                  {{ mandate.legalEntity.type }}
-                </v-chip>
               </div>
             </v-card-text>
           </v-card>
@@ -118,6 +130,24 @@
     return typeof id === 'string' ? id : ''
   })
 
+  const wikiHref = computed(() => {
+    const url = store.person?.wikiUrl
+    if (!url) {
+      return null
+    }
+
+    try {
+      const parsed = new URL(url)
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        return null
+      }
+
+      return parsed.href
+    } catch {
+      return null
+    }
+  })
+
   watch(personId, id => {
     if (id) {
       void store.loadOne(id)
@@ -136,24 +166,49 @@
     min-width: 0;
   }
 
-  .person-name {
+  .person-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 0.75rem;
     max-width: 100%;
-    font-size: 1.75rem;
+    min-width: 0;
+  }
+
+  .person-name {
+    flex: 0 1 auto;
+    max-width: 100%;
+    min-width: 0;
+    font-size: clamp(1.75rem, 5vw, 2.75rem);
     line-height: 1.15;
     overflow-wrap: anywhere;
   }
 
-  @media (min-width: 600px) {
-    .person-name {
-      font-size: 2.5rem;
-    }
+  .wiki-btn {
+    position: relative;
+    top: -0.2em;
+    letter-spacing: 0.08em;
+  }
+
+  .person-summary {
+    margin: 0.45rem 0 0;
+    color: #3f3a36;
+    font-size: 1.05rem;
+    line-height: 1.4;
+  }
+
+  .person-bio {
+    margin: 0.85rem 0 0;
+    max-width: 40rem;
+    line-height: 1.6;
+    white-space: pre-line;
   }
 
   @media (min-width: 600px) {
     .person-header {
       flex-direction: row;
       gap: 1.5rem;
-      align-items: center;
+      align-items: flex-start;
     }
   }
 
@@ -200,10 +255,6 @@
     background: #fffcf8;
     max-width: 100%;
     min-width: 0;
-  }
-
-  .mandate-card :deep(.v-card-item) {
-    grid-template-columns: max-content minmax(0, 1fr) max-content;
   }
 
   .mandate-card :deep(.v-card-title) {

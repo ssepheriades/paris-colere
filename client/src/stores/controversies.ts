@@ -1,31 +1,19 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export interface LegalEntitySummary {
+export interface Theme {
   id: string
   name: string
   shortDescription: string | null
-  type: string | null
-  logo: string | null
+  color: string | null
 }
 
-export interface PersonMandate {
+export interface Controversy {
   id: string
-  startDate: string
-  endDate: string | null
-  position: string | null
-  legalEntity: LegalEntitySummary
-}
-
-export interface Person {
-  id: string
-  firstname: string
-  lastname: string
-  photo: string | null
+  name: string
   shortDescription: string | null
-  bio: string | null
-  wikiUrl: string | null
-  personLegalEntities: PersonMandate[]
+  illustration: string | null
+  themes: Theme[]
 }
 
 type LoadStatus = 'idle' | 'loading' | 'ok' | 'error'
@@ -53,7 +41,37 @@ function idFrom (record: Record<string, unknown>): string {
   return ''
 }
 
-function parseLegalEntity (value: unknown): LegalEntitySummary | null {
+function parseTheme (value: unknown): Theme | null {
+  const record = asRecord(value)
+  if (!record) {
+    return null
+  }
+
+  const name = stringOrNull(record.name)
+  if (!name) {
+    return null
+  }
+
+  const id = typeof record.id === 'number' ? String(record.id) : idFrom(record)
+
+  return {
+    id,
+    name,
+    shortDescription: stringOrNull(record.shortDescription),
+    color: stringOrNull(record.color),
+  }
+}
+
+function parseThemes (value: unknown): Theme[] {
+  return Array.isArray(value)
+    ? value.flatMap(item => {
+        const theme = parseTheme(item)
+        return theme ? [theme] : []
+      })
+    : []
+}
+
+function parseControversy (value: unknown): Controversy | null {
   const record = asRecord(value)
   if (!record) {
     return null
@@ -68,60 +86,8 @@ function parseLegalEntity (value: unknown): LegalEntitySummary | null {
     id: idFrom(record),
     name,
     shortDescription: stringOrNull(record.shortDescription),
-    type: stringOrNull(record.type),
-    logo: stringOrNull(record.logo),
-  }
-}
-
-function parseMandate (value: unknown): PersonMandate | null {
-  const record = asRecord(value)
-  if (!record) {
-    return null
-  }
-
-  const legalEntity = parseLegalEntity(record.legalEntity)
-  const startDate = stringOrNull(record.startDate)
-  if (!legalEntity || !startDate) {
-    return null
-  }
-
-  return {
-    id: idFrom(record),
-    startDate,
-    endDate: stringOrNull(record.endDate),
-    position: stringOrNull(record.position),
-    legalEntity,
-  }
-}
-
-function parsePerson (value: unknown): Person | null {
-  const record = asRecord(value)
-  if (!record) {
-    return null
-  }
-
-  const firstname = stringOrNull(record.firstname)
-  const lastname = stringOrNull(record.lastname)
-  if (!firstname || !lastname) {
-    return null
-  }
-
-  const mandates = Array.isArray(record.personLegalEntities)
-    ? record.personLegalEntities.flatMap(item => {
-        const mandate = parseMandate(item)
-        return mandate ? [mandate] : []
-      })
-    : []
-
-  return {
-    id: idFrom(record),
-    firstname,
-    lastname,
-    photo: stringOrNull(record.photo),
-    shortDescription: stringOrNull(record.shortDescription),
-    bio: stringOrNull(record.bio),
-    wikiUrl: stringOrNull(record.wikiUrl),
-    personLegalEntities: mandates,
+    illustration: stringOrNull(record.illustration),
+    themes: parseThemes(record.theme ?? record.themes),
   }
 }
 
@@ -135,43 +101,9 @@ function readTotal (body: Record<string, unknown>): number {
   return typeof total === 'number' ? total : 0
 }
 
-export function currentMandates (person: Person): PersonMandate[] {
-  return person.personLegalEntities.filter(mandate => mandate.endDate === null)
-}
-
-export function personName (person: Pick<Person, 'firstname' | 'lastname'>): string {
-  return `${person.firstname} ${person.lastname}`
-}
-
-export function initials (person: Pick<Person, 'firstname' | 'lastname'>): string {
-  return `${person.firstname.charAt(0)}${person.lastname.charAt(0)}`.toUpperCase()
-}
-
-export function formatDate (value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(date)
-}
-
-export function formatRange (mandate: PersonMandate): string {
-  const start = formatDate(mandate.startDate)
-  if (!mandate.endDate) {
-    return `Depuis le ${start}`
-  }
-
-  return `${start} — ${formatDate(mandate.endDate)}`
-}
-
-export const usePeopleStore = defineStore('people', () => {
-  const people = ref<Person[]>([])
-  const person = ref<Person | null>(null)
+export const useControversiesStore = defineStore('controversies', () => {
+  const controversies = ref<Controversy[]>([])
+  const controversy = ref<Controversy | null>(null)
   const status = ref<LoadStatus>('idle')
   const detail = ref<string | null>(null)
   const page = ref(1)
@@ -183,14 +115,14 @@ export const usePeopleStore = defineStore('people', () => {
     page.value = nextPage
 
     try {
-      const response = await fetch(`/api/people?page=${nextPage}`, {
+      const response = await fetch(`/api/controversies?page=${nextPage}`, {
         headers: { Accept: 'application/ld+json' },
       })
 
       if (!response.ok) {
         status.value = 'error'
-        detail.value = 'La liste des personnes est indisponible.'
-        people.value = []
+        detail.value = 'La liste des affaires est indisponible.'
+        controversies.value = []
         total.value = 0
         return
       }
@@ -199,19 +131,19 @@ export const usePeopleStore = defineStore('people', () => {
       if (!body) {
         status.value = 'error'
         detail.value = 'Réponse illisible.'
-        people.value = []
+        controversies.value = []
         return
       }
 
-      people.value = collectionMembers(body).flatMap(item => {
-        const parsed = parsePerson(item)
+      controversies.value = collectionMembers(body).flatMap(item => {
+        const parsed = parseControversy(item)
         return parsed ? [parsed] : []
       })
       total.value = readTotal(body)
       status.value = 'ok'
     } catch (error) {
       status.value = 'error'
-      people.value = []
+      controversies.value = []
       total.value = 0
       detail.value = error instanceof Error ? error.message : 'Connexion impossible.'
     }
@@ -220,16 +152,16 @@ export const usePeopleStore = defineStore('people', () => {
   async function loadOne (id: string) {
     status.value = 'loading'
     detail.value = null
-    person.value = null
+    controversy.value = null
 
     try {
-      const response = await fetch(`/api/people/${id}`, {
+      const response = await fetch(`/api/controversies/${id}`, {
         headers: { Accept: 'application/ld+json' },
       })
 
       if (response.status === 404) {
         status.value = 'error'
-        detail.value = 'Cette personne est introuvable.'
+        detail.value = 'Cette affaire est introuvable.'
         return
       }
 
@@ -239,14 +171,14 @@ export const usePeopleStore = defineStore('people', () => {
         return
       }
 
-      const parsed = parsePerson(await response.json())
+      const parsed = parseControversy(await response.json())
       if (!parsed) {
         status.value = 'error'
         detail.value = 'Réponse illisible.'
         return
       }
 
-      person.value = parsed
+      controversy.value = parsed
       status.value = 'ok'
     } catch (error) {
       status.value = 'error'
@@ -255,8 +187,8 @@ export const usePeopleStore = defineStore('people', () => {
   }
 
   return {
-    people,
-    person,
+    controversies,
+    controversy,
     status,
     detail,
     page,

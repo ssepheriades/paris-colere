@@ -2,7 +2,7 @@
   <v-container class="py-8 py-md-12" max-width="1120">
     <header class="mb-8 mb-md-10">
       <p class="text-overline text-primary mb-2">Annuaire</p>
-      <h1 class="page-title">Personnes</h1>
+      <h1 class="page-title text-h3">Personnes</h1>
 
       <p class="text-body-1 text-medium-emphasis mt-3 page-lead">
         Photo, nom, et le mandat en cours.
@@ -59,6 +59,10 @@
               {{ personName(person) }}
             </v-card-title>
 
+            <p v-if="person.shortDescription" class="person-summary">
+              {{ person.shortDescription }}
+            </p>
+
             <v-card-subtitle class="mandate-list">
               <template v-if="currentMandates(person).length === 0">
                 <span class="text-medium-emphasis">Aucun mandat en cours</span>
@@ -106,14 +110,8 @@
   }
 
   .page-title {
-    font-size: 2rem;
+    font-size: clamp(2rem, 4vw, 2.75rem);
     line-height: 1.15;
-  }
-
-  @media (min-width: 600px) {
-    .page-title {
-      font-size: 2.75rem;
-    }
   }
 
   .person-grid {
@@ -132,10 +130,6 @@
   .person-card {
     min-width: 0;
     transition: box-shadow 0.2s ease, transform 0.2s ease;
-  }
-
-  .person-card :deep(.v-card-item) {
-    grid-template-columns: max-content minmax(0, 1fr) max-content;
   }
 
   .person-card :deep(.v-card-title),
@@ -159,6 +153,13 @@
     font-family: Fraunces, serif;
     font-size: 1.35rem;
     font-weight: 600;
+  }
+
+  .person-summary {
+    margin: 0.2rem 0 0;
+    color: #3f3a36;
+    font-size: 0.95rem;
+    line-height: 1.35;
   }
 
   .mandate-list {

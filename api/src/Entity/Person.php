@@ -7,6 +7,7 @@ use ApiPlatform\Metadata\ApiResource;
 use App\Repository\PersonRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -57,6 +58,18 @@ class Person
     #[ORM\ManyToMany(targetEntity: ControversyItem::class, mappedBy: 'people')]
     #[Groups(['person:read'])]
     private Collection $controversyItems;
+
+    #[ORM\Column(length: 128)]
+    #[Groups(['person:read'])]
+    private ?string $shortDescription = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['person:read'])]
+    private ?string $bio = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['person:read'])]
+    private ?string $wikiUrl = null;
 
     public function __construct()
     {
@@ -198,5 +211,41 @@ class Person
         $label = trim(($this->firstname ?? '').' '.($this->lastname ?? ''));
 
         return '' !== $label ? $label : 'Personne';
+    }
+
+    public function getShortDescription(): ?string
+    {
+        return $this->shortDescription;
+    }
+
+    public function setShortDescription(string $shortDescription): static
+    {
+        $this->shortDescription = $shortDescription;
+
+        return $this;
+    }
+
+    public function getBio(): ?string
+    {
+        return $this->bio;
+    }
+
+    public function setBio(?string $bio): static
+    {
+        $this->bio = $bio;
+
+        return $this;
+    }
+
+    public function getWikiUrl(): ?string
+    {
+        return $this->wikiUrl;
+    }
+
+    public function setWikiUrl(?string $wikiUrl): static
+    {
+        $this->wikiUrl = $wikiUrl;
+
+        return $this;
     }
 }

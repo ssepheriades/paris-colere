@@ -33,7 +33,7 @@ class ControversyItem
     /**
      * @var Collection<int, Source>
      */
-    #[ORM\OneToMany(targetEntity: Source::class, mappedBy: 'controversyItem')]
+    #[ORM\OneToMany(targetEntity: Source::class, mappedBy: 'controversyItem', cascade: ['persist'], orphanRemoval: true)]
     private Collection $sources;
 
     #[ORM\Column]
@@ -116,12 +116,7 @@ class ControversyItem
 
     public function removeSource(Source $source): static
     {
-        if ($this->sources->removeElement($source)) {
-            // set the owning side to null (unless already changed)
-            if ($source->getControversyItem() === $this) {
-                $source->setControversyItem(null);
-            }
-        }
+        $this->sources->removeElement($source);
 
         return $this;
     }

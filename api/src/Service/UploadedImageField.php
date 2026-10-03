@@ -26,6 +26,11 @@ final class UploadedImageField
         return $this->field('logo', 'Logo', 'logos', 512);
     }
 
+    public function illustration(): ImageField
+    {
+        return $this->field('illustration', 'Illustration', 'illustrations', 800);
+    }
+
     private function field(string $property, string $label, string $directory, int $maxEdge): ImageField
     {
         $uploadDir = $this->projectDir.'/public/uploads/'.$directory;

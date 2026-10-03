@@ -6,6 +6,8 @@
 
 // Composables
 import { createRouter, createWebHistory } from 'vue-router'
+import AffairesIndex from '@/pages/affaires/index.vue'
+import AffairesShow from '@/pages/affaires/show.vue'
 import PeopleIndex from '@/pages/people/index.vue'
 import PeopleShow from '@/pages/people/show.vue'
 
@@ -23,6 +25,14 @@ const router = createRouter({
     {
       path: '/people/:id',
       component: PeopleShow,
+    },
+    {
+      path: '/affaires',
+      component: AffairesIndex,
+    },
+    {
+      path: '/affaires/:id',
+      component: AffairesShow,
     },
   ],
 })

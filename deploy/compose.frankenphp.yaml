@@ -1,0 +1,18 @@
+---
+# FrankenPHP : TLS Caddy dans le conteneur, client Vue monté en lecture seule.
+services:
+  php:
+    environment:
+      SERVER_NAME: ${SERVER_NAME}
+      DEFAULT_URI: https://${SERVER_NAME}
+      SYMFONY_TRUSTED_PROXIES: ${SYMFONY_TRUSTED_PROXIES:-}
+      CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-^https://paris-colere\.org$}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    volumes:
+      - paris_colere_uploads:/app/public/uploads
+      - ${CLIENT_DIST:-../client/dist}:/app/client-dist:ro
+      - ./frankenphp/Caddyfile.prod:/etc/frankenphp/Caddyfile:ro
+
+volumes:
+  paris_colere_uploads:

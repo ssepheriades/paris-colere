@@ -4,6 +4,14 @@
       <v-app-bar-title class="app-title">
         <router-link to="/people">Paris Colère</router-link>
       </v-app-bar-title>
+
+      <v-btn to="/people" variant="text">
+        Personnes
+      </v-btn>
+
+      <v-btn to="/affaires" variant="text">
+        Affaires
+      </v-btn>
     </v-app-bar>
 
     <v-main>

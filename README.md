@@ -23,7 +23,9 @@ make client
 - Documentation : http://127.0.0.1:8000/api/docs (compte admin)
 - Administration : http://127.0.0.1:8000/admin
 
-Compte admin de développement : `admin@paris-colere.test` / `admin` (`ADMIN_EMAIL` et `ADMIN_PASSWORD` dans `api/.env`).
+Secrets locaux : `cp api/.env.local.example api/.env.local` puis éditer (fichier gitignoré).
+
+Compte admin de développement par défaut : `admin@paris-colere.test` / `admin` (dans `api/.env.local`).
 
 `make test` lance les tests fonctionnels de l’API.
 
@@ -36,3 +38,7 @@ make docker
 ```
 
 Le conteneur Postgres publie le port **5434** sur la machine, pour laisser le 5432 au cluster local et le 5433 au cluster Debian. L’API Docker écoute en HTTPS sur le port 443.
+
+## Production (paris-colere.org)
+
+Guide pas à pas (nginx + Docker sur Debian 12) : **[deploy/README.md](deploy/README.md)**.
