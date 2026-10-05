@@ -50,6 +50,9 @@ class Controversy
     #[Groups(['controversy:read'])]
     private Collection $theme;
 
+    #[ORM\Column]
+    private ?bool $isVisible = null;
+
     public function __construct()
     {
         $this->controversyItems = new ArrayCollection();
@@ -155,6 +158,18 @@ class Controversy
     public function removeTheme(Theme $theme): static
     {
         $this->theme->removeElement($theme);
+
+        return $this;
+    }
+
+    public function isVisible(): ?bool
+    {
+        return $this->isVisible;
+    }
+
+    public function setIsVisible(bool $isVisible): static
+    {
+        $this->isVisible = $isVisible;
 
         return $this;
     }

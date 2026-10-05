@@ -13,6 +13,12 @@ final class ImageResizer
     {
         $extension = $this->extension($file);
         $filename = Uuid::v4()->toRfc4122().'.'.$extension;
+
+        if (!\extension_loaded('imagick') || !class_exists(\Imagick::class)) {
+            // FrankenPHP / PHP sans Imagick : garder le fichier tel quel.
+            return $filename;
+        }
+
         $mime = (string) $file->getMimeType();
         $image = new \Imagick($file->getPathname());
 

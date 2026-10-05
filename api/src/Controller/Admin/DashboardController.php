@@ -35,6 +35,7 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(PersonCrudController::class, 'Personnes', 'fa fa-user');
         yield MenuItem::linkTo(LegalEntityCrudController::class, 'Structures', 'fa fa-building');
         yield MenuItem::linkTo(PartyCrudController::class, 'Partis', 'fa fa-flag');
+        yield MenuItem::linkTo(ContactCrudController::class, 'Contacts', 'fa fa-envelope');
         yield MenuItem::linkTo(UserCrudController::class, 'Utilisateurs', 'fa fa-lock');
     }
 }

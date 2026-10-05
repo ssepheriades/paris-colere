@@ -71,6 +71,9 @@ class Person
     #[Groups(['person:read'])]
     private ?string $wikiUrl = null;
 
+    #[ORM\Column]
+    private ?bool $isVisible = null;
+
     public function __construct()
     {
         $this->party = new ArrayCollection();
@@ -245,6 +248,18 @@ class Person
     public function setWikiUrl(?string $wikiUrl): static
     {
         $this->wikiUrl = $wikiUrl;
+
+        return $this;
+    }
+
+    public function isVisible(): ?bool
+    {
+        return $this->isVisible;
+    }
+
+    public function setIsVisible(bool $isVisible): static
+    {
+        $this->isVisible = $isVisible;
 
         return $this;
     }

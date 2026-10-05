@@ -13,6 +13,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
@@ -120,6 +121,7 @@ class ControversyCrudController extends AbstractCrudController
         yield IdField::new('id')->hideOnForm();
         yield TextField::new('name', 'Nom');
         yield TextField::new('shortDescription', 'Description courte');
+        yield BooleanField::new('isVisible', 'Visible');
         yield $this->images->illustration();
         yield AssociationField::new('theme', 'Thèmes');
         yield AssociationField::new('controversyItems', 'Faits')->onlyOnIndex();

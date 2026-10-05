@@ -12,6 +12,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\CollectionField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
@@ -118,6 +119,7 @@ class PersonCrudController extends AbstractCrudController
         yield TextField::new('firstname', 'Prénom');
         yield TextField::new('lastname', 'Nom');
         yield TextField::new('shortDescription', 'Description courte');
+        yield BooleanField::new('isVisible', 'Visible');
         yield TextareaField::new('bio', 'Biographie')->hideOnIndex();
         yield UrlField::new('wikiUrl', 'Lien wiki')->setDefaultProtocol('https')->hideOnIndex();
         yield $this->images->photo();

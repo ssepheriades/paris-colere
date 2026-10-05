@@ -2,7 +2,7 @@
   <v-app>
     <v-app-bar border flat>
       <v-app-bar-title class="app-title">
-        <router-link to="/people">Paris Colère</router-link>
+        <router-link to="/">Paris Colère</router-link>
       </v-app-bar-title>
 
       <v-btn to="/people" variant="text">
@@ -11,6 +11,10 @@
 
       <v-btn to="/affaires" variant="text">
         Affaires
+      </v-btn>
+
+      <v-btn to="/contact" variant="text">
+        Contact
       </v-btn>
     </v-app-bar>
 

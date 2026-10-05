@@ -59,6 +59,15 @@
       <p v-if="store.controversy.shortDescription" class="affair-summary">
         {{ store.controversy.shortDescription }}
       </p>
+
+      <v-btn
+        class="mt-2"
+        color="primary"
+        :to="`/contact?affaire=${store.controversy.id}`"
+        variant="outlined"
+      >
+        Contacter à propos de cette affaire
+      </v-btn>
     </header>
   </v-container>
 </template>
