@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Repository\ControversyRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -14,7 +16,13 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: ControversyRepository::class)]
-#[ApiResource(normalizationContext: ['groups' => ['controversy:read']])]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+    ],
+    normalizationContext: ['groups' => ['controversy:read']],
+)]
 class Controversy
 {
     #[ORM\Id]
@@ -40,7 +48,6 @@ class Controversy
      * @var Collection<int, ControversyItem>
      */
     #[ORM\OneToMany(targetEntity: ControversyItem::class, mappedBy: 'controversy', cascade: ['persist'], orphanRemoval: true)]
-    #[Groups(['controversy:read'])]
     private Collection $controversyItems;
 
     /**
@@ -58,7 +65,6 @@ class Controversy
      */
     #[ORM\OneToMany(targetEntity: KeyFigure::class, mappedBy: 'controversy', cascade: ['persist'], orphanRemoval: true)]
     #[ORM\OrderBy(['priority' => 'ASC'])]
-    #[Groups(['controversy:read'])]
     private Collection $keyFigures;
 
     public function __construct()
@@ -125,6 +131,18 @@ class Controversy
         return $this->controversyItems;
     }
 
+    /**
+     * @return list<ControversyItem>
+     */
+    #[Groups(['controversy:read'])]
+    #[SerializedName('controversyItems')]
+    public function getVisibleControversyItems(): array
+    {
+        return $this->controversyItems->filter(
+            static fn (ControversyItem $item): bool => true === $item->isVisible(),
+        )->getValues();
+    }
+
     public function addControversyItem(ControversyItem $controversyItem): static
     {
         if (!$this->controversyItems->contains($controversyItem)) {
@@ -189,6 +207,18 @@ class Controversy
     public function getKeyFigures(): Collection
     {
         return $this->keyFigures;
+    }
+
+    /**
+     * @return list<KeyFigure>
+     */
+    #[Groups(['controversy:read'])]
+    #[SerializedName('keyFigures')]
+    public function getVisibleKeyFigures(): array
+    {
+        return $this->keyFigures->filter(
+            static fn (KeyFigure $keyFigure): bool => true === $keyFigure->isVisible(),
+        )->getValues();
     }
 
     public function addKeyFigure(KeyFigure $keyFigure): static

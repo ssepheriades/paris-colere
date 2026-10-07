@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Repository\PersonRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -15,7 +17,13 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: PersonRepository::class)]
-#[ApiResource(normalizationContext: ['groups' => ['person:read']])]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+    ],
+    normalizationContext: ['groups' => ['person:read']],
+)]
 class Person
 {
     #[ORM\Id]
@@ -56,7 +64,6 @@ class Person
      * @var Collection<int, ControversyItem>
      */
     #[ORM\ManyToMany(targetEntity: ControversyItem::class, mappedBy: 'people')]
-    #[Groups(['person:read'])]
     private Collection $controversyItems;
 
     #[ORM\Column(length: 128)]
@@ -188,6 +195,18 @@ class Person
     public function getControversyItems(): Collection
     {
         return $this->controversyItems;
+    }
+
+    /**
+     * @return list<ControversyItem>
+     */
+    #[Groups(['person:read'])]
+    #[SerializedName('controversyItems')]
+    public function getVisibleControversyItems(): array
+    {
+        return $this->controversyItems->filter(
+            static fn (ControversyItem $item): bool => true === $item->isVisible(),
+        )->getValues();
     }
 
     public function addControversyItem(ControversyItem $controversyItem): static

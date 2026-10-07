@@ -2,7 +2,12 @@
 
 namespace App\Tests;
 
+use App\Entity\Controversy;
+use App\Entity\KeyFigure;
+use App\Entity\Person;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Uid\Uuid;
 
 class SmokeTest extends WebTestCase
 {
@@ -68,5 +73,175 @@ class SmokeTest extends WebTestCase
         ]);
 
         self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testContentWritesAreRejected(): void
+    {
+        $client = static::createClient();
+        $server = [
+            'CONTENT_TYPE' => 'application/ld+json',
+            'HTTP_ACCEPT' => 'application/ld+json',
+        ];
+
+        $client->request('POST', '/api/people', server: $server, content: '{}');
+        self::assertResponseStatusCodeSame(405);
+
+        $client->request('PATCH', '/api/people/00000000-0000-0000-0000-000000000001', server: $server, content: '{}');
+        self::assertResponseStatusCodeSame(405);
+
+        $client->request('DELETE', '/api/controversies/00000000-0000-0000-0000-000000000001', server: $server);
+        self::assertResponseStatusCodeSame(405);
+    }
+
+    public function testKeyFiguresAreNotAResource(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/api/key_figures', server: [
+            'HTTP_ACCEPT' => 'application/ld+json',
+        ]);
+
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testHiddenControversyIsNotReadable(): void
+    {
+        $client = static::createClient();
+        $controversy = $this->persistControversy('Brouillon secret', false);
+
+        try {
+            $client->request('GET', '/api/controversies/'.$controversy->getId(), server: [
+                'HTTP_ACCEPT' => 'application/ld+json',
+            ]);
+
+            self::assertResponseStatusCodeSame(404);
+        } finally {
+            $this->removeControversy($controversy->getId());
+        }
+    }
+
+    public function testHiddenPersonIsNotReadable(): void
+    {
+        $client = static::createClient();
+        $manager = $this->manager();
+        $person = (new Person())
+            ->setFirstname('Camille')
+            ->setLastname('Masquée')
+            ->setShortDescription('Ne doit pas être lisible')
+            ->setIsVisible(false);
+        $manager->persist($person);
+        $manager->flush();
+        $id = $person->getId();
+
+        try {
+            $client->request('GET', '/api/people/'.$id, server: [
+                'HTTP_ACCEPT' => 'application/ld+json',
+            ]);
+
+            self::assertResponseStatusCodeSame(404);
+        } finally {
+            $manager = $this->manager();
+            $managed = null !== $id ? $manager->find(Person::class, $id) : null;
+            if (null !== $managed) {
+                $manager->remove($managed);
+                $manager->flush();
+            }
+        }
+    }
+
+    public function testHiddenKeyFigureIsAbsentFromControversyJson(): void
+    {
+        $client = static::createClient();
+        $controversy = $this->persistControversy('Affaire publique', true);
+        $manager = $this->manager();
+        $controversy = $manager->find(Controversy::class, $controversy->getId());
+        self::assertInstanceOf(Controversy::class, $controversy);
+
+        $hidden = (new KeyFigure())
+            ->setFigure('99')
+            ->setLabel('Chiffre masqué')
+            ->setPriority(2)
+            ->setIsVisible(false);
+        $visible = (new KeyFigure())
+            ->setFigure('1')
+            ->setLabel('Chiffre public')
+            ->setPriority(1)
+            ->setIsVisible(true);
+        $controversy->addKeyFigure($hidden);
+        $controversy->addKeyFigure($visible);
+        $manager->flush();
+
+        try {
+            $client->request('GET', '/api/controversies/'.$controversy->getId(), server: [
+                'HTTP_ACCEPT' => 'application/ld+json',
+            ]);
+
+            self::assertResponseIsSuccessful();
+            $content = $client->getResponse()->getContent();
+            self::assertIsString($content);
+            self::assertStringContainsString('Chiffre public', $content);
+            self::assertStringNotContainsString('Chiffre masqué', $content);
+        } finally {
+            $this->removeControversy($controversy->getId());
+        }
+    }
+
+    public function testContactPostIsRateLimited(): void
+    {
+        $client = static::createClient();
+        $server = [
+            'CONTENT_TYPE' => 'application/ld+json',
+            'HTTP_ACCEPT' => 'application/ld+json',
+            'REMOTE_ADDR' => '203.0.113.'.random_int(1, 254),
+        ];
+        $payload = json_encode([
+            'name' => 'Smoke Contact',
+            'email' => 'smoke-limit@example.com',
+            'message' => 'Message de test',
+        ], \JSON_THROW_ON_ERROR);
+
+        for ($attempt = 1; $attempt <= 5; ++$attempt) {
+            $client->request('POST', '/api/contacts', server: $server, content: $payload);
+            self::assertResponseStatusCodeSame(201, \sprintf('La tentative %d doit passer.', $attempt));
+        }
+
+        $client->request('POST', '/api/contacts', server: $server, content: $payload);
+        self::assertResponseStatusCodeSame(429);
+    }
+
+    private function persistControversy(string $name, bool $visible): Controversy
+    {
+        $manager = $this->manager();
+        $controversy = (new Controversy())
+            ->setName($name)
+            ->setShortDescription('Fiche de test')
+            ->setIsVisible($visible);
+        $manager->persist($controversy);
+        $manager->flush();
+
+        return $controversy;
+    }
+
+    private function removeControversy(?Uuid $id): void
+    {
+        if (null === $id) {
+            return;
+        }
+
+        $manager = $this->manager();
+        $controversy = $manager->find(Controversy::class, $id);
+        if (null === $controversy) {
+            return;
+        }
+
+        $manager->remove($controversy);
+        $manager->flush();
+    }
+
+    private function manager(): EntityManagerInterface
+    {
+        $manager = static::getContainer()->get(EntityManagerInterface::class);
+        self::assertInstanceOf(EntityManagerInterface::class, $manager);
+
+        return $manager;
     }
 }

@@ -11,7 +11,7 @@ Le client appelle l’API en `/api` (URLs relatives) : tout doit être servi sou
 
 ## FrankenPHP — enchaînement après le clone
 
-1. **`deploy/.env`** complet (`APP_SECRET`, `POSTGRES_PASSWORD`, `CADDY_MERCURE_JWT_SECRET`, `ADMIN_*`, `SERVER_NAME=paris-colere.org`).
+1. **`deploy/.env`** complet (`APP_SECRET`, `POSTGRES_PASSWORD`, `ADMIN_*`, `SERVER_NAME=paris-colere.org`).
 2. **DNS** : enregistrement **A** `paris-colere.org` → IP du VPS (Caddy obtient Let’s Encrypt sur le port 80).
 3. **Postgres** : `./deploy/scripts/db-up.sh` (si pas déjà fait).
 4. **Stack complète** : `./deploy/scripts/deploy-frankenphp.sh` (build Vue + `docker compose` prod).
@@ -96,7 +96,7 @@ chmod 600 deploy/.env
 Remplir au minimum :
 
 ```bash
-openssl rand -hex 32   # APP_SECRET, POSTGRES_PASSWORD, CADDY_MERCURE_JWT_SECRET
+openssl rand -hex 32   # APP_SECRET, POSTGRES_PASSWORD
 ```
 
 `ADMIN_EMAIL` / `ADMIN_PASSWORD` : compte EasyAdmin en prod (pas les valeurs de dev).

@@ -109,6 +109,7 @@ class ParisActorsFixtures extends Fixture
             $person->setShortDescription($data['shortDescription']);
             $person->setBio($data['bio']);
             $person->setWikiUrl($data['wikiUrl']);
+            $person->setIsVisible(true);
             $manager->persist($person);
         } else {
             $this->fillEmpty($person->getShortDescription(), $data['shortDescription'], $person->setShortDescription(...));
