@@ -96,13 +96,19 @@
 
   const affairItems = computed(() => store.controversies)
 
-  function applyPrefill (id: string | null | undefined) {
-    if (id) {
-      controversyId.value = id
-    }
+  function resetFeedback () {
+    success.value = false
+    error.value = null
   }
 
-  watch(() => props.affaire, applyPrefill, { immediate: true })
+  function applyPrefill (id: string | null | undefined) {
+    controversyId.value = id ?? null
+  }
+
+  watch(() => props.affaire, id => {
+    resetFeedback()
+    applyPrefill(id)
+  }, { immediate: true })
 
   onMounted(async () => {
     affairsLoading.value = true

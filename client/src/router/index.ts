@@ -8,7 +8,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AffairesIndex from '@/pages/affaires/index.vue'
 import AffairesShow from '@/pages/affaires/show.vue'
-import Contact from '@/pages/contact.vue'
 import Home from '@/pages/home.vue'
 import PeopleIndex from '@/pages/people/index.vue'
 import PeopleShow from '@/pages/people/show.vue'
@@ -35,10 +34,6 @@ const router = createRouter({
     {
       path: '/affaires/:id',
       component: AffairesShow,
-    },
-    {
-      path: '/contact',
-      component: Contact,
     },
   ],
 })

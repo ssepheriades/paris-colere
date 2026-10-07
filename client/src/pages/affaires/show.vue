@@ -90,8 +90,8 @@
       <v-btn
         class="mt-2"
         color="primary"
-        :to="`/contact?affaire=${store.controversy.id}`"
         variant="outlined"
+        @click="contact.open(store.controversy.id)"
       >
         Contacter à propos de cette affaire
       </v-btn>
@@ -102,10 +102,12 @@
 <script lang="ts" setup>
   import { computed, watch } from 'vue'
   import { useRoute } from 'vue-router'
+  import { useContactStore } from '@/stores/contact'
   import { useControversiesStore } from '@/stores/controversies'
 
   const route = useRoute()
   const store = useControversiesStore()
+  const contact = useContactStore()
 
   const controversyId = computed(() => {
     const id = route.params.id

@@ -13,7 +13,7 @@
         Affaires
       </v-btn>
 
-      <v-btn to="/contact" variant="text">
+      <v-btn variant="text" @click="contact.open()">
         Contact
       </v-btn>
     </v-app-bar>
@@ -21,8 +21,17 @@
     <v-main>
       <router-view />
     </v-main>
+
+    <ContactSheet />
   </v-app>
 </template>
+
+<script lang="ts" setup>
+  import ContactSheet from '@/components/ContactSheet.vue'
+  import { useContactStore } from '@/stores/contact'
+
+  const contact = useContactStore()
+</script>
 
 <style scoped>
   .app-title :deep(a) {
