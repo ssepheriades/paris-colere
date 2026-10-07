@@ -8,12 +8,21 @@ export interface Theme {
   color: string | null
 }
 
+export interface KeyFigure {
+  id: string
+  figure: string
+  label: string
+  subLabel: string | null
+  priority: number
+}
+
 export interface Controversy {
   id: string
   name: string
   shortDescription: string | null
   illustration: string | null
   themes: Theme[]
+  keyFigures: KeyFigure[]
 }
 
 type LoadStatus = 'idle' | 'loading' | 'ok' | 'error'
@@ -71,6 +80,44 @@ function parseThemes (value: unknown): Theme[] {
     : []
 }
 
+function parseKeyFigure (value: unknown): KeyFigure | null {
+  const record = asRecord(value)
+  if (!record) {
+    return null
+  }
+
+  if (record.isVisible === false) {
+    return null
+  }
+
+  const figure = stringOrNull(record.figure)
+  const label = stringOrNull(record.label)
+  if (!figure || !label) {
+    return null
+  }
+
+  const priority = typeof record.priority === 'number' ? record.priority : 0
+
+  return {
+    id: idFrom(record),
+    figure,
+    label,
+    subLabel: stringOrNull(record.subLabel),
+    priority,
+  }
+}
+
+function parseKeyFigures (value: unknown): KeyFigure[] {
+  const figures = Array.isArray(value)
+    ? value.flatMap(item => {
+        const keyFigure = parseKeyFigure(item)
+        return keyFigure ? [keyFigure] : []
+      })
+    : []
+
+  return [...figures].sort((a, b) => a.priority - b.priority)
+}
+
 function parseControversy (value: unknown): Controversy | null {
   const record = asRecord(value)
   if (!record) {
@@ -88,6 +135,7 @@ function parseControversy (value: unknown): Controversy | null {
     shortDescription: stringOrNull(record.shortDescription),
     illustration: stringOrNull(record.illustration),
     themes: parseThemes(record.theme ?? record.themes),
+    keyFigures: parseKeyFigures(record.keyFigures),
   }
 }
 

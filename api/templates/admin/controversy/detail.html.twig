@@ -3,6 +3,42 @@
 {% block main %}
     {{ parent() }}
 
+    {% form_theme keyFiguresForm 'bootstrap_5_layout.html.twig' %}
+    <section class="content-panel mt-3">
+        <div class="content-panel-header">
+            <div class="content-panel-header-title">Chiffres clés</div>
+        </div>
+        <div class="content-panel-body with-padding">
+            {{ form_start(keyFiguresForm) }}
+                {{ form_errors(keyFiguresForm) }}
+                <div id="controversy-key-figures"
+                     data-index="{{ keyFiguresForm.keyFigures|length }}"
+                     data-prototype="{{ _self.key_figure_row(keyFiguresForm.keyFigures.vars.prototype)|e('html_attr') }}">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Chiffre</th>
+                                <th>Label</th>
+                                <th>Sous-label</th>
+                                <th>Priorité</th>
+                                <th>Visible</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for child in keyFiguresForm.keyFigures %}
+                                {{ _self.key_figure_row(child) }}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <button type="button" class="btn btn-secondary" id="add-key-figure">Ajouter un chiffre clé</button>
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                {{ form_widget(keyFiguresForm._token) }}
+            {{ form_end(keyFiguresForm, {render_rest: false}) }}
+        </div>
+    </section>
+
     {% form_theme itemsForm 'bootstrap_5_layout.html.twig' %}
     <section class="content-panel mt-3">
         <div class="content-panel-header">
@@ -36,6 +72,20 @@
         </div>
     </section>
     <script>
+        const keyFiguresCollection = document.getElementById('controversy-key-figures');
+        document.getElementById('add-key-figure').addEventListener('click', () => {
+            const index = Number(keyFiguresCollection.dataset.index);
+            const html = keyFiguresCollection.dataset.prototype.replace(/__key_figure__/g, String(index));
+            keyFiguresCollection.querySelector('tbody').insertAdjacentHTML('beforeend', html);
+            keyFiguresCollection.dataset.index = String(index + 1);
+        });
+        keyFiguresCollection.addEventListener('click', (event) => {
+            const removeKeyFigure = event.target.closest('.js-remove-key-figure');
+            if (removeKeyFigure) {
+                removeKeyFigure.closest('tr').remove();
+            }
+        });
+
         const collection = document.getElementById('controversy-items');
         document.getElementById('add-controversy-item').addEventListener('click', () => {
             const index = Number(collection.dataset.index);
@@ -71,6 +121,34 @@
         });
     </script>
 {% endblock %}
+
+{% macro key_figure_row(keyFigure) %}
+    <tr class="controversy-key-figure">
+        <td>
+            {{ form_widget(keyFigure.figure) }}
+            {{ form_errors(keyFigure.figure) }}
+        </td>
+        <td>
+            {{ form_widget(keyFigure.label) }}
+            {{ form_errors(keyFigure.label) }}
+        </td>
+        <td>
+            {{ form_widget(keyFigure.subLabel) }}
+            {{ form_errors(keyFigure.subLabel) }}
+        </td>
+        <td>
+            {{ form_widget(keyFigure.priority) }}
+            {{ form_errors(keyFigure.priority) }}
+        </td>
+        <td>
+            {{ form_widget(keyFigure.isVisible) }}
+            {{ form_errors(keyFigure.isVisible) }}
+        </td>
+        <td class="text-end">
+            <button type="button" class="btn btn-link text-danger px-0 js-remove-key-figure">Retirer</button>
+        </td>
+    </tr>
+{% endmacro %}
 
 {% macro item_rows(item) %}
     <tr class="controversy-item">

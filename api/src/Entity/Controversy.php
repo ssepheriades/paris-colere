@@ -53,10 +53,19 @@ class Controversy
     #[ORM\Column]
     private ?bool $isVisible = null;
 
+    /**
+     * @var Collection<int, KeyFigure>
+     */
+    #[ORM\OneToMany(targetEntity: KeyFigure::class, mappedBy: 'controversy', cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\OrderBy(['priority' => 'ASC'])]
+    #[Groups(['controversy:read'])]
+    private Collection $keyFigures;
+
     public function __construct()
     {
         $this->controversyItems = new ArrayCollection();
         $this->theme = new ArrayCollection();
+        $this->keyFigures = new ArrayCollection();
     }
 
     public function getId(): ?Uuid
@@ -170,6 +179,31 @@ class Controversy
     public function setIsVisible(bool $isVisible): static
     {
         $this->isVisible = $isVisible;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, KeyFigure>
+     */
+    public function getKeyFigures(): Collection
+    {
+        return $this->keyFigures;
+    }
+
+    public function addKeyFigure(KeyFigure $keyFigure): static
+    {
+        if (!$this->keyFigures->contains($keyFigure)) {
+            $this->keyFigures->add($keyFigure);
+            $keyFigure->setControversy($this);
+        }
+
+        return $this;
+    }
+
+    public function removeKeyFigure(KeyFigure $keyFigure): static
+    {
+        $this->keyFigures->removeElement($keyFigure);
 
         return $this;
     }

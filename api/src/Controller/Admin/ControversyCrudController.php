@@ -3,7 +3,9 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Controversy;
+use App\Entity\KeyFigure;
 use App\Form\ControversyItemType;
+use App\Form\KeyFigureType;
 use App\Service\UploadedImageField;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
@@ -39,14 +41,16 @@ class ControversyCrudController extends AbstractCrudController
     {
         /** @var Controversy $controversy */
         $controversy = $context->getEntity()->getInstance();
-        $form = $this->createItemsForm($controversy);
+        $itemsForm = $this->createItemsForm($controversy);
+        $keyFiguresForm = $this->createKeyFiguresForm($controversy);
 
         $responseParameters = parent::detail($context);
         if ($responseParameters instanceof Response) {
             return $responseParameters;
         }
 
-        $responseParameters->set('itemsForm', $form->createView());
+        $responseParameters->set('itemsForm', $itemsForm->createView());
+        $responseParameters->set('keyFiguresForm', $keyFiguresForm->createView());
 
         return $responseParameters;
     }
@@ -62,12 +66,7 @@ class ControversyCrudController extends AbstractCrudController
         if ($form->isSubmitted() && $form->isValid()) {
             $this->container->get('doctrine')->getManager()->flush();
 
-            return $this->redirect($this->container->get(AdminUrlGenerator::class)
-                ->unsetAll()
-                ->setController(self::class)
-                ->setAction(Action::DETAIL)
-                ->setEntityId($controversy->getId())
-                ->generateUrl());
+            return $this->redirectToDetail($controversy);
         }
 
         $responseParameters = parent::detail($context);
@@ -76,8 +75,44 @@ class ControversyCrudController extends AbstractCrudController
         }
 
         $responseParameters->set('itemsForm', $form->createView());
+        $responseParameters->set('keyFiguresForm', $this->createKeyFiguresForm($controversy)->createView());
 
         return $responseParameters;
+    }
+
+    #[AdminRoute(path: '/{entityId}/key-figures', name: 'key_figures', options: ['methods' => ['POST']])]
+    public function saveKeyFigures(AdminContext $context): KeyValueStore|Response
+    {
+        /** @var Controversy $controversy */
+        $controversy = $context->getEntity()->getInstance();
+        $form = $this->createKeyFiguresForm($controversy);
+        $form->handleRequest($context->getRequest());
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->container->get('doctrine')->getManager()->flush();
+
+            return $this->redirectToDetail($controversy);
+        }
+
+        $responseParameters = parent::detail($context);
+        if ($responseParameters instanceof Response) {
+            return $responseParameters;
+        }
+
+        $responseParameters->set('itemsForm', $this->createItemsForm($controversy)->createView());
+        $responseParameters->set('keyFiguresForm', $form->createView());
+
+        return $responseParameters;
+    }
+
+    private function redirectToDetail(Controversy $controversy): Response
+    {
+        return $this->redirect($this->container->get(AdminUrlGenerator::class)
+            ->unsetAll()
+            ->setController(self::class)
+            ->setAction(Action::DETAIL)
+            ->setEntityId($controversy->getId())
+            ->generateUrl());
     }
 
     private function createItemsForm(Controversy $controversy): FormInterface
@@ -97,6 +132,28 @@ class ControversyCrudController extends AbstractCrudController
                 'by_reference' => false,
                 'label' => false,
                 'prototype_name' => '__item__',
+            ])
+            ->getForm();
+    }
+
+    private function createKeyFiguresForm(Controversy $controversy): FormInterface
+    {
+        return $this->createFormBuilder($controversy, [
+            'action' => $this->container->get(AdminUrlGenerator::class)
+                ->unsetAll()
+                ->setController(self::class)
+                ->setAction('saveKeyFigures')
+                ->setEntityId($controversy->getId())
+                ->generateUrl(),
+        ])
+            ->add('keyFigures', CollectionType::class, [
+                'entry_type' => KeyFigureType::class,
+                'allow_add' => true,
+                'allow_delete' => true,
+                'by_reference' => false,
+                'label' => false,
+                'prototype_name' => '__key_figure__',
+                'prototype_data' => (new KeyFigure())->setPriority(0)->setIsVisible(true),
             ])
             ->getForm();
     }

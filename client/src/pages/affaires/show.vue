@@ -60,6 +60,33 @@
         {{ store.controversy.shortDescription }}
       </p>
 
+      <v-row
+        v-if="store.controversy.keyFigures.length"
+        class="key-figures"
+      >
+        <v-col
+          v-for="keyFigure in store.controversy.keyFigures"
+          :key="keyFigure.id"
+          cols="12"
+          sm="6"
+          md="4"
+        >
+          <v-card class="key-figure-card" variant="outlined">
+            <v-card-text class="key-figure-body">
+              <div class="key-figure-value">
+                <span
+                  v-for="(part, index) in figureParts(keyFigure.figure)"
+                  :key="index"
+                  :class="{ 'key-figure-accent': part.accent }"
+                >{{ part.text }}</span>
+              </div>
+              <div class="key-figure-label">{{ keyFigure.label }}</div>
+              <div class="key-figure-sublabel">{{ keyFigure.subLabel }}</div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
       <v-btn
         class="mt-2"
         color="primary"
@@ -90,6 +117,13 @@
       void store.loadOne(id)
     }
   }, { immediate: true })
+
+  function figureParts (figure: string) {
+    return figure.split(/([+\-±−\d]+)/).filter(Boolean).map(text => ({
+      text,
+      accent: /^[+\-±−\d]+$/.test(text),
+    }))
+  }
 </script>
 
 <style scoped>
@@ -140,5 +174,53 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+  }
+
+  .key-figures {
+    width: 100%;
+    margin: 0.25rem -0.75rem 0;
+  }
+
+  .key-figures > .v-col {
+    padding: 0.75rem;
+  }
+
+  .key-figure-card {
+    height: 100%;
+    border: 2px solid rgb(var(--v-theme-primary));
+    background: #fbf8f3;
+  }
+
+  .key-figure-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .key-figure-value {
+    font-size: clamp(1.5rem, 3.5vw, 2rem);
+    font-weight: 700;
+    line-height: 1.15;
+  }
+
+  .key-figure-accent {
+    color: rgb(var(--v-theme-primary));
+  }
+
+  .key-figure-label {
+    margin-top: 0.35rem;
+    color: #3f3a36;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .key-figure-sublabel {
+    margin-top: 0.2rem;
+    min-height: 1.3em;
+    color: #6b6560;
+    font-size: 0.8rem;
+    font-weight: 400;
+    line-height: 1.3;
   }
 </style>

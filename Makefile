@@ -1,4 +1,4 @@
-.PHONY: serve client db db-start test docker
+.PHONY: serve client db db-start test docker cc dmm
 
 PG_BIN := /usr/lib/postgresql/17/bin
 PG_DATA := $(CURDIR)/.data/postgres
@@ -25,3 +25,9 @@ test: db-start
 
 docker:
 	cd api && docker compose up --wait
+
+cc:
+	cd api && php bin/console cache:clear
+
+dmm:
+	cd api && php bin/console doctrine:migrations:migrate
