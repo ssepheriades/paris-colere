@@ -16,6 +16,28 @@ export interface KeyFigure {
   priority: number
 }
 
+export type SourceProvider = 'link' | 'youtube' | 'dailymotion' | 'vimeo' | 'tweet'
+
+export interface Source {
+  id: string
+  url: string
+  provider: SourceProvider
+  externalId: string | null
+  title: string | null
+  thumbnailUrl: string | null
+  authorName: string | null
+  embedText: string | null
+}
+
+export interface ControversyItem {
+  id: string
+  type: string
+  title: string
+  date: string
+  shortDescription: string | null
+  sources: Source[]
+}
+
 export interface Controversy {
   id: string
   name: string
@@ -23,6 +45,7 @@ export interface Controversy {
   illustration: string | null
   themes: Theme[]
   keyFigures: KeyFigure[]
+  items: ControversyItem[]
 }
 
 type LoadStatus = 'idle' | 'loading' | 'ok' | 'error'
@@ -118,6 +141,85 @@ function parseKeyFigures (value: unknown): KeyFigure[] {
   return [...figures].sort((a, b) => a.priority - b.priority)
 }
 
+const SOURCE_PROVIDERS: readonly SourceProvider[] = ['link', 'youtube', 'dailymotion', 'vimeo', 'tweet']
+
+function parseSource (value: unknown): Source | null {
+  const record = asRecord(value)
+  if (!record) {
+    return null
+  }
+
+  if (record.isVisible === false) {
+    return null
+  }
+
+  const url = stringOrNull(record.url)
+  if (!url) {
+    return null
+  }
+
+  const providerValue = stringOrNull(record.provider)
+  const provider = SOURCE_PROVIDERS.find(candidate => candidate === providerValue) ?? 'link'
+
+  return {
+    id: idFrom(record),
+    url,
+    provider,
+    externalId: stringOrNull(record.externalId),
+    title: stringOrNull(record.title),
+    thumbnailUrl: stringOrNull(record.thumbnailUrl),
+    authorName: stringOrNull(record.authorName),
+    embedText: stringOrNull(record.embedText),
+  }
+}
+
+function parseSources (value: unknown): Source[] {
+  return Array.isArray(value)
+    ? value.flatMap(item => {
+        const source = parseSource(item)
+        return source ? [source] : []
+      })
+    : []
+}
+
+function parseItem (value: unknown): ControversyItem | null {
+  const record = asRecord(value)
+  if (!record) {
+    return null
+  }
+
+  if (record.isVisible === false) {
+    return null
+  }
+
+  const title = stringOrNull(record.title)
+  const date = stringOrNull(record.date)
+  const type = stringOrNull(record.type)
+  if (!title || !date || !type) {
+    return null
+  }
+
+  return {
+    id: idFrom(record),
+    type,
+    title,
+    date,
+    shortDescription: stringOrNull(record.shortDescription),
+    sources: parseSources(record.sources),
+  }
+}
+
+function parseItems (value: unknown): ControversyItem[] {
+  const items = Array.isArray(value)
+    ? value.flatMap(item => {
+        const parsed = parseItem(item)
+        return parsed ? [parsed] : []
+      })
+    : []
+
+  return [...items].sort((a, b) => a.date.localeCompare(b.date))
+}
+
 function parseControversy (value: unknown): Controversy | null {
   const record = asRecord(value)
   if (!record) {
@@ -136,6 +238,7 @@ function parseControversy (value: unknown): Controversy | null {
     illustration: stringOrNull(record.illustration),
     themes: parseThemes(record.theme ?? record.themes),
     keyFigures: parseKeyFigures(record.keyFigures),
+    items: parseItems(record.controversyItems),
   }
 }
 

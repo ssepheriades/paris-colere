@@ -4,9 +4,12 @@ namespace App\Form;
 
 use App\Entity\ControversyItem;
 use App\Entity\Source;
+use App\Enum\ControversyItemType as ItemType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
@@ -22,8 +25,22 @@ class ControversyItemType extends AbstractType
                 'label' => false,
                 'widget' => 'single_text',
             ])
+            ->add('type', EnumType::class, [
+                'class' => ItemType::class,
+                'label' => false,
+                'placeholder' => false,
+            ])
             ->add('title', TextType::class, [
                 'label' => false,
+            ])
+            ->add('shortDescription', TextareaType::class, [
+                'label' => false,
+                'required' => false,
+                'empty_data' => null,
+                'attr' => [
+                    'rows' => 2,
+                    'placeholder' => 'Description courte',
+                ],
             ])
             ->add('sources', CollectionType::class, [
                 'entry_type' => SourceType::class,
@@ -40,8 +57,8 @@ class ControversyItemType extends AbstractType
                     return;
                 }
 
-                if (null === $item->getType() || '' === $item->getType()) {
-                    $item->setType('fait');
+                if (null === $item->getType()) {
+                    $item->setType(ItemType::Fact);
                 }
 
                 if (null === $item->isVisible()) {

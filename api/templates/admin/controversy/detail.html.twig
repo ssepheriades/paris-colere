@@ -54,7 +54,9 @@
                         <thead>
                             <tr>
                                 <th>Date</th>
+                                <th>Type</th>
                                 <th>Titre</th>
+                                <th>Description courte</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -157,15 +159,23 @@
             {{ form_errors(item.date) }}
         </td>
         <td>
+            {{ form_widget(item.type) }}
+            {{ form_errors(item.type) }}
+        </td>
+        <td>
             {{ form_widget(item.title) }}
             {{ form_errors(item.title) }}
+        </td>
+        <td>
+            {{ form_widget(item.shortDescription) }}
+            {{ form_errors(item.shortDescription) }}
         </td>
         <td class="text-end">
             <button type="button" class="btn btn-link text-danger px-0 js-remove-item">Retirer</button>
         </td>
     </tr>
     <tr class="controversy-item-sources">
-        <td colspan="3">
+        <td colspan="5">
             <div class="sources ms-4"
                  data-index="{{ item.sources|length }}"
                  data-prototype="{{ _self.source_row(item.sources.vars.prototype)|e('html_attr') }}">

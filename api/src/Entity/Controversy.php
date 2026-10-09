@@ -134,6 +134,7 @@ class Controversy
     /**
      * @return list<ControversyItem>
      */
+    #[ApiProperty(writable: false)]
     #[Groups(['controversy:read'])]
     #[SerializedName('controversyItems')]
     public function getVisibleControversyItems(): array
@@ -212,6 +213,7 @@ class Controversy
     /**
      * @return list<KeyFigure>
      */
+    #[ApiProperty(writable: false)]
     #[Groups(['controversy:read'])]
     #[SerializedName('keyFigures')]
     public function getVisibleKeyFigures(): array

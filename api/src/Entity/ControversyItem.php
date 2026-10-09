@@ -2,15 +2,19 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use App\Enum\ControversyItemType;
 use App\Repository\ControversyItemRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: ControversyItemRepository::class)]
@@ -21,15 +25,19 @@ class ControversyItem
     #[ORM\Column(type: UuidType::NAME, unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
+    #[Groups(['controversy:read'])]
     private ?Uuid $id = null;
 
-    #[ORM\Column(length: 32)]
-    private ?string $type = null;
+    #[ORM\Column(length: 32, enumType: ControversyItemType::class)]
+    #[Groups(['controversy:read'])]
+    private ?ControversyItemType $type = null;
 
     #[ORM\Column(length: 128)]
+    #[Groups(['controversy:read'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups(['controversy:read'])]
     private ?\DateTime $date = null;
 
     /**
@@ -51,6 +59,10 @@ class ControversyItem
     #[ORM\ManyToMany(targetEntity: Person::class, inversedBy: 'controversyItems')]
     private Collection $people;
 
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['controversy:read'])]
+    private ?string $shortDescription = null;
+
     public function __construct()
     {
         $this->sources = new ArrayCollection();
@@ -62,12 +74,12 @@ class ControversyItem
         return $this->id;
     }
 
-    public function getType(): ?string
+    public function getType(): ?ControversyItemType
     {
         return $this->type;
     }
 
-    public function setType(string $type): static
+    public function setType(ControversyItemType $type): static
     {
         $this->type = $type;
 
@@ -104,6 +116,19 @@ class ControversyItem
     public function getSources(): Collection
     {
         return $this->sources;
+    }
+
+    /**
+     * @return list<Source>
+     */
+    #[ApiProperty(writable: false)]
+    #[Groups(['controversy:read'])]
+    #[SerializedName('sources')]
+    public function getVisibleSources(): array
+    {
+        return $this->sources->filter(
+            static fn (Source $source): bool => true === $source->isVisible(),
+        )->getValues();
     }
 
     public function addSource(Source $source): static
@@ -177,5 +202,17 @@ class ControversyItem
     public function __toString(): string
     {
         return $this->title ?? 'Fait';
+    }
+
+    public function getShortDescription(): ?string
+    {
+        return $this->shortDescription;
+    }
+
+    public function setShortDescription(?string $shortDescription): static
+    {
+        $this->shortDescription = $shortDescription;
+
+        return $this;
     }
 }

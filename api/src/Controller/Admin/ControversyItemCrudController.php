@@ -3,12 +3,15 @@
 namespace App\Controller\Admin;
 
 use App\Entity\ControversyItem;
+use App\Enum\ControversyItemType;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
 /**
@@ -33,7 +36,15 @@ class ControversyItemCrudController extends AbstractCrudController
     {
         yield IdField::new('id')->hideOnForm();
         yield TextField::new('title', 'Titre');
-        yield TextField::new('type', 'Type');
+        yield TextareaField::new('shortDescription', 'Description courte')
+            ->setRequired(false)
+            ->hideOnIndex();
+        yield ChoiceField::new('type', 'Type')
+            ->setChoices([
+                'Fait' => ControversyItemType::Fact,
+                'Déclaration' => ControversyItemType::Statement,
+                'Publication' => ControversyItemType::Publication,
+            ]);
         yield DateField::new('date', 'Date');
         yield BooleanField::new('isVisible', 'Visible');
         yield AssociationField::new('controversy', 'Affaire')
