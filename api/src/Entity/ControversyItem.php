@@ -14,11 +14,18 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: ControversyItemRepository::class)]
-#[ApiResource(operations: [new Get(), new GetCollection()])]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+    ],
+    normalizationContext: ['groups' => ['controversy:read']],
+)]
 class ControversyItem
 {
     #[ORM\Id]
@@ -113,6 +120,7 @@ class ControversyItem
     /**
      * @return Collection<int, Source>
      */
+    #[Ignore]
     public function getSources(): Collection
     {
         return $this->sources;

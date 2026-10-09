@@ -3,8 +3,11 @@
 namespace App\Tests;
 
 use App\Entity\Controversy;
+use App\Entity\ControversyItem;
 use App\Entity\KeyFigure;
 use App\Entity\Person;
+use App\Entity\Source;
+use App\Enum\ControversyItemType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Uid\Uuid;
@@ -185,6 +188,55 @@ class SmokeTest extends WebTestCase
         }
     }
 
+    public function testHiddenSourceIsAbsentFromItemJson(): void
+    {
+        $client = static::createClient();
+        $controversy = $this->persistControversy('Affaire avec sources', true);
+        $manager = $this->manager();
+        $controversy = $manager->find(Controversy::class, $controversy->getId());
+        self::assertInstanceOf(Controversy::class, $controversy);
+
+        $item = (new ControversyItem())
+            ->setType(ControversyItemType::Fact)
+            ->setTitle('Fait public')
+            ->setDate(new \DateTime('2024-01-15'))
+            ->setShortDescription('Description publique')
+            ->setIsVisible(true);
+        $controversy->addControversyItem($item);
+
+        $hidden = (new Source())
+            ->setUrl('https://example.com/source-masquee')
+            ->setIsVisible(false);
+        $visible = (new Source())
+            ->setUrl('https://example.com/source-publique')
+            ->setIsVisible(true);
+        $item->addSource($hidden);
+        $item->addSource($visible);
+        $manager->flush();
+
+        try {
+            $client->request('GET', '/api/controversy_items/'.$item->getId(), server: [
+                'HTTP_ACCEPT' => 'application/ld+json',
+            ]);
+
+            self::assertResponseIsSuccessful();
+            $itemUrls = $this->sourceUrls($client->getResponse()->getContent());
+            self::assertContains('https://example.com/source-publique', $itemUrls);
+            self::assertNotContains('https://example.com/source-masquee', $itemUrls);
+
+            $client->request('GET', '/api/controversies/'.$controversy->getId(), server: [
+                'HTTP_ACCEPT' => 'application/ld+json',
+            ]);
+
+            self::assertResponseIsSuccessful();
+            $controversyUrls = $this->sourceUrls($client->getResponse()->getContent());
+            self::assertContains('https://example.com/source-publique', $controversyUrls);
+            self::assertNotContains('https://example.com/source-masquee', $controversyUrls);
+        } finally {
+            $this->removeControversy($controversy->getId());
+        }
+    }
+
     public function testContactPostIsRateLimited(): void
     {
         $client = static::createClient();
@@ -206,6 +258,34 @@ class SmokeTest extends WebTestCase
 
         $client->request('POST', '/api/contacts', server: $server, content: $payload);
         self::assertResponseStatusCodeSame(429);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function sourceUrls(string|false $content): array
+    {
+        self::assertIsString($content);
+        $decoded = json_decode($content, true, 512, \JSON_THROW_ON_ERROR);
+        self::assertIsArray($decoded);
+
+        $urls = [];
+        $collect = static function (mixed $value) use (&$collect, &$urls): void {
+            if (!\is_array($value)) {
+                return;
+            }
+
+            if (isset($value['url']) && \is_string($value['url'])) {
+                $urls[] = $value['url'];
+            }
+
+            foreach ($value as $child) {
+                $collect($child);
+            }
+        };
+        $collect($decoded);
+
+        return $urls;
     }
 
     private function persistControversy(string $name, bool $visible): Controversy
