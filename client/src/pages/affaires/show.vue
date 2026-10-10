@@ -88,6 +88,27 @@
       </v-row>
 
       <template v-if="store.controversy.items.length">
+        <div v-if="typeFilters.length" class="type-chips">
+          <v-chip
+            color="primary"
+            size="small"
+            :variant="selectedType === null ? 'flat' : 'tonal'"
+            @click="selectedType = null"
+          >
+            Tous
+          </v-chip>
+          <v-chip
+            v-for="filter in typeFilters"
+            :key="filter.value"
+            color="primary"
+            size="small"
+            :variant="selectedType === filter.value ? 'flat' : 'tonal'"
+            @click="toggleType(filter.value)"
+          >
+            {{ filter.label }}
+          </v-chip>
+        </div>
+
         <h2 class="text-overline text-medium-emphasis mb-0">Chronologie</h2>
 
         <v-timeline
@@ -99,7 +120,7 @@
           truncate-line="both"
         >
           <v-timeline-item
-            v-for="item in store.controversy.items"
+            v-for="item in visibleItems"
             :key="item.id"
             dot-color="primary"
             fill-dot
@@ -234,6 +255,37 @@
   const store = useControversiesStore()
   const contact = useContactStore()
   const loadedVideos = ref<Record<string, boolean>>({})
+  const selectedType = ref<string | null>(null)
+
+  const typeLabels: Record<string, string> = {
+    fact: 'Fait',
+    statement: 'Déclaration',
+    publication: 'Publication',
+  }
+
+  const typeFilters = computed(() => {
+    const present = new Set(store.controversy?.items.map(item => item.type) ?? [])
+
+    return ['fact', 'statement', 'publication']
+      .filter(type => present.has(type))
+      .map(value => ({
+        value,
+        label: typeLabels[value] ?? value,
+      }))
+  })
+
+  const visibleItems = computed(() => {
+    const items = store.controversy?.items ?? []
+    if (selectedType.value === null) {
+      return items
+    }
+
+    return items.filter(item => item.type === selectedType.value)
+  })
+
+  function toggleType (type: string) {
+    selectedType.value = selectedType.value === type ? null : type
+  }
 
   const controversyId = computed(() => {
     const id = route.params.id
@@ -278,6 +330,7 @@
 
   watch(controversyId, id => {
     loadedVideos.value = {}
+    selectedType.value = null
     if (id) {
       void store.loadOne(id)
     }
@@ -416,10 +469,19 @@
     line-height: 1.4;
   }
 
-  .theme-chips {
+  .theme-chips,
+  .type-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+  }
+
+  .type-chips {
+    margin-bottom: 0.85rem;
+  }
+
+  .type-chips :deep(.v-chip) {
+    cursor: pointer;
   }
 
   .key-figures {

@@ -9,6 +9,9 @@ serve:
 client:
 	cd client && npm run dev -- --port 5173
 
+yb:
+	cd client && npm run build
+
 db-start:
 	@test -f $(PG_DATA)/PG_VERSION || (echo "Cluster Postgres absent dans .data/postgres" && exit 1)
 	@if ! $(PG_BIN)/pg_isready -h 127.0.0.1 -p 5432 -U app >/dev/null 2>&1; then \
