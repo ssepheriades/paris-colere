@@ -183,9 +183,29 @@ class ControversyItem
     /**
      * @return Collection<int, Person>
      */
+    #[Ignore]
     public function getPeople(): Collection
     {
         return $this->people;
+    }
+
+    /**
+     * @return list<Person>
+     */
+    #[ApiProperty(writable: false)]
+    #[Groups(['controversy:read'])]
+    #[SerializedName('people')]
+    public function getVisiblePeople(): array
+    {
+        $people = $this->people->filter(
+            static fn (Person $person): bool => true === $person->isVisible(),
+        )->getValues();
+
+        usort($people, static function (Person $left, Person $right): int {
+            return [$left->getLastname(), $left->getFirstname()] <=> [$right->getLastname(), $right->getFirstname()];
+        });
+
+        return $people;
     }
 
     public function addPerson(Person $person): static

@@ -117,6 +117,24 @@
               </v-card-item>
 
               <v-card-text class="pt-0">
+                <div v-if="item.people.length" class="affair-people">
+                  <router-link
+                    v-for="person in item.people"
+                    :key="person.id"
+                    class="affair-person"
+                    :to="`/people/${person.id}`"
+                  >
+                    <v-avatar class="affair-person-avatar" color="surface-light" size="36">
+                      <v-img v-if="person.photo" alt="" cover :src="person.photo" />
+                      <span v-else class="affair-person-initials">{{ initials(person) }}</span>
+                    </v-avatar>
+                    <span class="affair-person-body">
+                      <span class="affair-person-name">{{ personName(person) }}</span>
+                      <span v-if="person.shortDescription" class="affair-person-role">{{ person.shortDescription }}</span>
+                    </span>
+                  </router-link>
+                </div>
+
                 <p v-if="item.shortDescription" class="affair-item-description mb-0">
                   {{ item.shortDescription }}
                 </p>
@@ -210,6 +228,7 @@
   import { useRoute } from 'vue-router'
   import { useContactStore } from '@/stores/contact'
   import { useControversiesStore, type Source } from '@/stores/controversies'
+  import { initials, personName } from '@/stores/people'
 
   const route = useRoute()
   const store = useControversiesStore()
@@ -487,6 +506,61 @@
     color: #3f3a36;
     line-height: 1.55;
     white-space: pre-line;
+  }
+
+  .affair-people {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .affair-person {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .affair-person:hover .affair-person-name {
+    color: rgb(var(--v-theme-primary));
+  }
+
+  .affair-person:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-primary));
+    outline-offset: 2px;
+  }
+
+  .affair-person-avatar {
+    flex: none;
+    border: 1px solid #e7dfd4;
+  }
+
+  .affair-person-initials {
+    color: #7a1f2b;
+    font-family: Fraunces, serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .affair-person-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .affair-person-name {
+    color: #2a2420;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .affair-person-role {
+    color: #6b6560;
+    font-size: 0.85rem;
+    line-height: 1.3;
   }
 
   .affair-sources {

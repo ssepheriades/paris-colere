@@ -30,15 +30,15 @@ class Person
     #[ORM\Column(type: UuidType::NAME, unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
-    #[Groups(['person:read'])]
+    #[Groups(['person:read', 'controversy:read'])]
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 64)]
-    #[Groups(['person:read'])]
+    #[Groups(['person:read', 'controversy:read'])]
     private ?string $firstname = null;
 
     #[ORM\Column(length: 64)]
-    #[Groups(['person:read'])]
+    #[Groups(['person:read', 'controversy:read'])]
     private ?string $lastname = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -67,7 +67,7 @@ class Person
     private Collection $controversyItems;
 
     #[ORM\Column(length: 128)]
-    #[Groups(['person:read'])]
+    #[Groups(['person:read', 'controversy:read'])]
     private ?string $shortDescription = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -131,7 +131,7 @@ class Person
 
     #[ApiProperty(writable: false)]
     #[SerializedName('photo')]
-    #[Groups(['person:read'])]
+    #[Groups(['person:read', 'controversy:read'])]
     public function getPhotoUrl(): ?string
     {
         return null === $this->photo ? null : '/uploads/photos/'.$this->photo;

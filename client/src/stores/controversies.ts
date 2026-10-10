@@ -29,12 +29,21 @@ export interface Source {
   embedText: string | null
 }
 
+export interface ItemPerson {
+  id: string
+  firstname: string
+  lastname: string
+  photo: string | null
+  shortDescription: string | null
+}
+
 export interface ControversyItem {
   id: string
   type: string
   title: string
   date: string
   shortDescription: string | null
+  people: ItemPerson[]
   sources: Source[]
 }
 
@@ -182,6 +191,36 @@ function parseSources (value: unknown): Source[] {
     : []
 }
 
+function parseItemPerson (value: unknown): ItemPerson | null {
+  const record = asRecord(value)
+  if (!record) {
+    return null
+  }
+
+  const firstname = stringOrNull(record.firstname)
+  const lastname = stringOrNull(record.lastname)
+  if (!firstname || !lastname) {
+    return null
+  }
+
+  return {
+    id: idFrom(record),
+    firstname,
+    lastname,
+    photo: stringOrNull(record.photo),
+    shortDescription: stringOrNull(record.shortDescription),
+  }
+}
+
+function parseItemPeople (value: unknown): ItemPerson[] {
+  return Array.isArray(value)
+    ? value.flatMap(person => {
+        const parsed = parseItemPerson(person)
+        return parsed ? [parsed] : []
+      })
+    : []
+}
+
 function parseItem (value: unknown): ControversyItem | null {
   const record = asRecord(value)
   if (!record) {
@@ -205,6 +244,7 @@ function parseItem (value: unknown): ControversyItem | null {
     title,
     date,
     shortDescription: stringOrNull(record.shortDescription),
+    people: parseItemPeople(record.people),
     sources: parseSources(record.sources),
   }
 }
