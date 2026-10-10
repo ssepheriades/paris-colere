@@ -22,17 +22,8 @@
           <v-btn
             color="primary"
             size="large"
-            to="/people"
-            variant="flat"
-          >
-            Voir les personnes
-          </v-btn>
-
-          <v-btn
-            color="secondary"
-            size="large"
             to="/affaires"
-            variant="outlined"
+            variant="flat"
           >
             Voir les affaires
           </v-btn>
