@@ -4,7 +4,6 @@ namespace App\EventListener;
 
 use App\Entity\Source;
 use App\Service\EmbedResolver;
-use App\Service\ResolvedEmbed;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
@@ -14,9 +13,8 @@ use Doctrine\ORM\Events;
 #[AsEntityListener(event: Events::preUpdate, method: 'preUpdate', entity: Source::class)]
 final class SourceEmbedListener
 {
-    public function __construct(
-        private EmbedResolver $embedResolver,
-    ) {
+    public function __construct(private readonly EmbedResolver $resolver)
+    {
     }
 
     public function prePersist(Source $source): void
@@ -45,21 +43,11 @@ final class SourceEmbedListener
 
     private function apply(Source $source): void
     {
-        $url = trim((string) $source->getUrl());
-        if ('' === $url) {
-            $source->applyResolvedEmbed(ResolvedEmbed::link());
-
+        $url = $source->getUrl();
+        if (null === $url || '' === trim($url)) {
             return;
         }
 
-        if ($url !== $source->getUrl()) {
-            $source->setUrl($url);
-        }
-
-        try {
-            $source->applyResolvedEmbed($this->embedResolver->resolve($url));
-        } catch (\Throwable) {
-            // A provider outage must not abort the save. The URL is already stored.
-        }
+        $source->applyResolvedEmbed($this->resolver->resolve($url));
     }
 }

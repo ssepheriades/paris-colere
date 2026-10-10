@@ -117,10 +117,6 @@
               </v-card-item>
 
               <v-card-text class="pt-0">
-                <v-chip class="mb-3" color="primary" size="small" variant="tonal">
-                  {{ typeLabel(item.type) }}
-                </v-chip>
-
                 <p v-if="item.shortDescription" class="affair-item-description mb-0">
                   {{ item.shortDescription }}
                 </p>
@@ -167,17 +163,28 @@
                       </blockquote>
                     </div>
 
-                    <p v-else class="affair-source-link">
-                      <a
-                        v-if="httpUrl(source.url)"
-                        class="affair-source-anchor"
-                        :href="httpUrl(source.url) ?? undefined"
-                        rel="noopener noreferrer"
-                        target="_blank"
+                    <a
+                      v-else-if="httpUrl(source.url)"
+                      class="affair-link-card"
+                      :href="httpUrl(source.url) ?? undefined"
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      <img
+                        v-if="httpsUrl(source.thumbnailUrl)"
+                        alt=""
+                        class="affair-link-thumb"
+                        :src="httpsUrl(source.thumbnailUrl) ?? undefined"
+                        @error="hideBrokenImage"
                       >
-                        {{ source.url }}
-                      </a>
-                    </p>
+                      <span class="affair-link-body">
+                        <span v-if="source.authorName || source.title" class="affair-link-site">
+                          {{ source.authorName || hostLabel(source.url) }}
+                        </span>
+                        <span class="affair-link-title">{{ source.title || hostLabel(source.url) }}</span>
+                        <span v-if="source.embedText" class="affair-link-excerpt">{{ source.embedText }}</span>
+                      </span>
+                    </a>
                   </template>
                 </div>
               </v-card-text>
@@ -286,6 +293,22 @@
     return url?.startsWith('https://') ? url : null
   }
 
+  function hostLabel (value: string): string {
+    const url = httpUrl(value)
+    if (!url) {
+      return value
+    }
+
+    return new URL(url).hostname.replace(/^www\./, '')
+  }
+
+  function hideBrokenImage (event: Event) {
+    const image = event.target
+    if (image instanceof HTMLImageElement) {
+      image.hidden = true
+    }
+  }
+
   function videoEmbedSrc (source: Source): string | null {
     const id = source.externalId
     if (!id) {
@@ -312,16 +335,6 @@
       text,
       accent: /^[+\-±−\d]+$/.test(text),
     }))
-  }
-
-  const typeLabels: Record<string, string> = {
-    fact: 'Fait',
-    statement: 'Déclaration',
-    publication: 'Publication',
-  }
-
-  function typeLabel (type: string) {
-    return typeLabels[type] ?? type
   }
 
   function formatItemDate (value: string) {
@@ -549,13 +562,70 @@
     max-width: 100%;
   }
 
-  .affair-source-link {
-    margin: 0;
+  .affair-link-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: inherit;
+    text-decoration: none;
+    background: #fffcf8;
+    border: 1px solid #e7dfd4;
+    border-radius: 4px;
   }
 
-  .affair-source-anchor {
+  .affair-link-card:hover {
+    border-color: rgb(var(--v-theme-primary));
+  }
+
+  .affair-link-card:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-primary));
+    outline-offset: 2px;
+  }
+
+  .affair-link-thumb {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: #f6f1ea;
+  }
+
+  .affair-link-thumb[hidden] {
+    display: none;
+  }
+
+  .affair-link-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.8rem 0.95rem 0.9rem;
+  }
+
+  .affair-link-site {
     color: rgb(var(--v-theme-primary));
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .affair-link-title {
+    color: #2a2420;
+    font-family: Fraunces, serif;
+    font-size: 1.05rem;
     font-weight: 600;
-    overflow-wrap: anywhere;
+    line-height: 1.3;
+  }
+
+  .affair-link-excerpt {
+    display: -webkit-box;
+    overflow: hidden;
+    color: #6b6560;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 </style>

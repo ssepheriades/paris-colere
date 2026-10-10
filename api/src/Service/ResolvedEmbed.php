@@ -16,8 +16,8 @@ final readonly class ResolvedEmbed
     ) {
     }
 
-    public static function link(): self
+    public static function link(?string $title = null, ?string $thumbnailUrl = null, ?string $authorName = null, ?string $embedText = null): self
     {
-        return new self(SourceProvider::Link);
+        return new self(SourceProvider::Link, null, $title, $thumbnailUrl, $authorName, $embedText);
     }
 }

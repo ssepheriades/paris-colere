@@ -20,6 +20,7 @@ services:
         resource: '../src/'
         exclude:
             - '../src/DataFixtures/'
+            - '../src/Service/ResolvedEmbed.php'
 
 when@dev:
     services:

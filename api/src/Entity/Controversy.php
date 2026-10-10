@@ -48,6 +48,7 @@ class Controversy
      * @var Collection<int, ControversyItem>
      */
     #[ORM\OneToMany(targetEntity: ControversyItem::class, mappedBy: 'controversy', cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\OrderBy(['date' => 'DESC'])]
     private Collection $controversyItems;
 
     /**
@@ -139,9 +140,20 @@ class Controversy
     #[SerializedName('controversyItems')]
     public function getVisibleControversyItems(): array
     {
-        return $this->controversyItems->filter(
+        $items = $this->controversyItems->filter(
             static fn (ControversyItem $item): bool => true === $item->isVisible(),
         )->getValues();
+
+        usort($items, static function (ControversyItem $left, ControversyItem $right): int {
+            $byDate = ($right->getDate()?->getTimestamp() ?? 0) <=> ($left->getDate()?->getTimestamp() ?? 0);
+            if (0 !== $byDate) {
+                return $byDate;
+            }
+
+            return strcmp((string) $right->getId(), (string) $left->getId());
+        });
+
+        return $items;
     }
 
     public function addControversyItem(ControversyItem $controversyItem): static

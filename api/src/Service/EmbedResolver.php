@@ -3,24 +3,36 @@
 namespace App\Service;
 
 use App\Enum\SourceProvider;
+use Symfony\Component\HttpClient\Exception\TransportException;
+use Symfony\Component\HttpClient\NoPrivateNetworkHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Classifies a pasted URL and reads title metadata from known oEmbed endpoints.
- * The pasted page itself is never fetched.
+ * Classifies a pasted URL. Players and tweets use their oEmbed endpoint.
+ * Other http(s) pages are fetched once for Open Graph tags.
  */
 final class EmbedResolver
 {
     private const TIMEOUT_SECONDS = 2.5;
+
+    private const PAGE_TIMEOUT_SECONDS = 5;
+
+    private const MAX_PAGE_BYTES = 1_500_000;
+
+    private const BROWSER = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 
     private const YOUTUBE_OEMBED = 'https://www.youtube.com/oembed';
     private const DAILYMOTION_OEMBED = 'https://www.dailymotion.com/services/oembed';
     private const VIMEO_OEMBED = 'https://vimeo.com/api/oembed.json';
     private const TWITTER_OEMBED = 'https://publish.twitter.com/oembed';
 
+    private readonly OpenGraphReader $openGraph;
+
     public function __construct(
         private HttpClientInterface $httpClient,
+        ?OpenGraphReader $openGraph = null,
     ) {
+        $this->openGraph = $openGraph ?? new OpenGraphReader();
     }
 
     public function resolve(string $url): ResolvedEmbed
@@ -83,7 +95,51 @@ final class EmbedResolver
             );
         }
 
-        return ResolvedEmbed::link();
+        return $this->openGraphFrom($url);
+    }
+
+    private function openGraphFrom(string $url): ResolvedEmbed
+    {
+        $html = $this->fetchPage($url);
+        if (null === $html) {
+            return ResolvedEmbed::link();
+        }
+
+        return $this->openGraph->read($html, $url);
+    }
+
+    private function fetchPage(string $url): ?string
+    {
+        try {
+            $response = (new NoPrivateNetworkHttpClient($this->httpClient))->request('GET', $url, [
+                'timeout' => self::PAGE_TIMEOUT_SECONDS,
+                'max_duration' => 8,
+                'max_redirects' => 3,
+                'headers' => [
+                    'User-Agent' => self::BROWSER,
+                    'Accept' => 'text/html,application/xhtml+xml',
+                    'Accept-Language' => 'fr-FR,fr;q=0.9',
+                ],
+                'on_progress' => static function (int $dlNow): void {
+                    if ($dlNow > self::MAX_PAGE_BYTES) {
+                        throw new TransportException('Réponse trop volumineuse.');
+                    }
+                },
+            ]);
+
+            if (200 !== $response->getStatusCode()) {
+                return null;
+            }
+
+            $type = strtolower($response->getHeaders(false)['content-type'][0] ?? '');
+            if (str_contains($type, 'image/') || str_contains($type, 'application/json')) {
+                return null;
+            }
+
+            return $response->getContent(false);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

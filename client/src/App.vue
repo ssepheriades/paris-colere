@@ -5,10 +5,6 @@
         <router-link to="/">Paris Colère</router-link>
       </v-app-bar-title>
 
-      <v-btn to="/people" variant="text">
-        Personnes
-      </v-btn>
-
       <v-btn to="/affaires" variant="text">
         Affaires
       </v-btn>

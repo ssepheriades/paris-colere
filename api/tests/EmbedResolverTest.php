@@ -127,29 +127,52 @@ class EmbedResolverTest extends TestCase
         self::assertStringNotContainsString('alert', $resolved->embedText);
     }
 
-    public function testPlainLinkDoesNotFetchAnything(): void
+    public function testPlainLinkReadsOpenGraph(): void
     {
-        $http = new MockHttpClient(function (): never {
-            self::fail('Une URL quelconque ne doit pas être téléchargée.');
+        $http = new MockHttpClient(function (string $method, string $url): MockResponse {
+            self::assertSame('GET', $method);
+            self::assertSame('https://example.com/dossier/article', $url);
+
+            return new MockResponse(<<<'HTML'
+                <html><head>
+                <meta property="og:site_name" content="BFM">
+                <meta property="og:title" content="Accord d&#39;indemnisation">
+                <meta property="og:description" content="Un fonds de 20 millions.">
+                <meta property="og:image" content="https://cdn.example/photo.jpg">
+                </head></html>
+                HTML, ['response_headers' => ['content-type: text/html; charset=utf-8']]);
         });
 
-        $resolved = (new EmbedResolver($http))->resolve('https://example.com/youtube/watch?v=dQw4w9WgXcQ');
+        $resolved = (new EmbedResolver($http))->resolve('https://example.com/dossier/article');
 
         self::assertSame(SourceProvider::Link, $resolved->provider);
         self::assertNull($resolved->externalId);
-        self::assertSame(0, $http->getRequestsCount());
+        self::assertSame("Accord d'indemnisation", $resolved->title);
+        self::assertSame('BFM', $resolved->authorName);
+        self::assertSame('Un fonds de 20 millions.', $resolved->embedText);
+        self::assertSame('https://cdn.example/photo.jpg', $resolved->thumbnailUrl);
+        self::assertSame(1, $http->getRequestsCount());
     }
 
     public function testLookalikeHostStaysALink(): void
     {
-        $http = new MockHttpClient(function (): never {
-            self::fail('Un hôte imitant YouTube ne doit pas être contacté.');
+        $requested = [];
+        $http = new MockHttpClient(function (string $method, string $url) use (&$requested): MockResponse {
+            $requested[] = $url;
+
+            return new MockResponse('<title>Leurre</title>', [
+                'response_headers' => ['content-type: text/html'],
+            ]);
         });
 
         $resolved = (new EmbedResolver($http))->resolve('https://www.youtube.com.evil.example/watch?v=dQw4w9WgXcQ');
 
         self::assertSame(SourceProvider::Link, $resolved->provider);
-        self::assertSame(0, $http->getRequestsCount());
+        self::assertNull($resolved->externalId);
+        foreach ($requested as $url) {
+            self::assertStringNotContainsString('youtube.com/oembed', $url);
+            self::assertStringStartsWith('https://www.youtube.com.evil.example/', $url);
+        }
     }
 
     public function testFailedOEmbedKeepsRecognizedProvider(): void

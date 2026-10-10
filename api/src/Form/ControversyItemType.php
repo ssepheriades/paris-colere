@@ -3,12 +3,14 @@
 namespace App\Form;
 
 use App\Entity\ControversyItem;
+use App\Entity\Person;
 use App\Entity\Source;
 use App\Enum\ControversyItemType as ItemType;
+use App\Repository\PersonRepository;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
-use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -25,10 +27,18 @@ class ControversyItemType extends AbstractType
                 'label' => false,
                 'widget' => 'single_text',
             ])
-            ->add('type', EnumType::class, [
-                'class' => ItemType::class,
+            ->add('people', EntityType::class, [
+                'class' => Person::class,
+                'multiple' => true,
+                'required' => false,
+                'by_reference' => false,
                 'label' => false,
-                'placeholder' => false,
+                'attr' => [
+                    'size' => 5,
+                ],
+                'query_builder' => static fn (PersonRepository $repository) => $repository->createQueryBuilder('person')
+                    ->orderBy('person.lastname', 'ASC')
+                    ->addOrderBy('person.firstname', 'ASC'),
             ])
             ->add('title', TextType::class, [
                 'label' => false,

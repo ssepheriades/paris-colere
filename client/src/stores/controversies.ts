@@ -217,7 +217,14 @@ function parseItems (value: unknown): ControversyItem[] {
       })
     : []
 
-  return [...items].sort((a, b) => a.date.localeCompare(b.date))
+  return [...items].sort((a, b) => {
+    const byDate = b.date.localeCompare(a.date)
+    if (byDate !== 0) {
+      return byDate
+    }
+
+    return b.id.localeCompare(a.id)
+  })
 }
 
 function parseControversy (value: unknown): Controversy | null {

@@ -20,7 +20,7 @@ enum SourceProvider: string implements TranslatableInterface
             self::YouTube => 'YouTube',
             self::Dailymotion => 'Dailymotion',
             self::Vimeo => 'Vimeo',
-            self::Tweet => 'Tweet',
+            self::Tweet => 'Message',
         };
     }
 }
