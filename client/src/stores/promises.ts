@@ -11,6 +11,15 @@ export interface Theme {
 
 export type CampaignPromiseStatus = 'kept' | 'partial' | 'broken' | 'in_progress'
 
+export type CampaignPromiseResultType = 'absolute' | 'percentage'
+
+export interface PromiseResult {
+  resultType: CampaignPromiseResultType
+  resultValue: number
+  objective: number | null
+  resultLabel: string | null
+}
+
 export interface PromiseSource {
   id: string
   url: string
@@ -23,6 +32,7 @@ export interface CampaignPromise {
   quote: string
   status: CampaignPromiseStatus
   illustration: string | null
+  result: PromiseResult | null
   themes: Theme[]
   sources: PromiseSource[]
 }
@@ -40,6 +50,35 @@ function stringOrNull (value: unknown): string | null {
   return typeof value === 'string' && value !== '' ? value : null
 }
 
+function numberOrNull (value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+
+  if (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value))) {
+    return Number(value)
+  }
+
+  return null
+}
+
+const RESULT_TYPES: readonly CampaignPromiseResultType[] = ['absolute', 'percentage']
+
+function parseResult (record: Record<string, unknown>): PromiseResult | null {
+  const typeValue = stringOrNull(record.resultType)
+  const resultType = RESULT_TYPES.find(candidate => candidate === typeValue)
+  const resultValue = numberOrNull(record.resultValue)
+  if (!resultType || resultValue === null) {
+    return null
+  }
+
+  return {
+    resultType,
+    resultValue,
+    objective: resultType === 'absolute' ? numberOrNull(record.objective) : null,
+    resultLabel: resultType === 'absolute' ? stringOrNull(record.resultLabel) : null,
+  }
+}
 function illustrationUrl (value: unknown): string | null {
   const url = stringOrNull(value)
   if (!url) {
@@ -140,6 +179,7 @@ function parsePromise (value: unknown): CampaignPromise | null {
     quote,
     status,
     illustration: illustrationUrl(record.illustration),
+    result: parseResult(record),
     themes,
     sources,
   }

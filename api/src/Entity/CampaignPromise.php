@@ -6,6 +6,7 @@ use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use App\Enum\CampaignPromiseResultType;
 use App\Enum\CampaignPromiseStatus;
 use App\Repository\CampaignPromiseRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -13,12 +14,17 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Serializer\Attribute\Context;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Serializer\Attribute\SerializedName;
+use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\Entity(repositoryClass: CampaignPromiseRepository::class)]
+#[Assert\Callback('validateResult')]
 #[ApiResource(
     operations: [
         new Get(),
@@ -47,8 +53,19 @@ class CampaignPromise
     #[Groups(['promise:read'])]
     private ?CampaignPromiseStatus $status = null;
 
-    #[ORM\Column(length: 16, nullable: true)]
-    private ?string $resultType = null;
+    #[ORM\Column(length: 16, nullable: true, enumType: CampaignPromiseResultType::class)]
+    #[Groups(['promise:read'])]
+    private ?CampaignPromiseResultType $resultType = null;
+
+    #[ORM\Column(type: Types::DECIMAL, precision: 14, scale: 2, nullable: true)]
+    private ?string $resultValue = null;
+
+    #[ORM\Column(type: Types::DECIMAL, precision: 14, scale: 2, nullable: true)]
+    private ?string $objective = null;
+
+    #[ORM\Column(length: 32, nullable: true)]
+    #[Groups(['promise:read'])]
+    private ?string $resultLabel = null;
 
     #[ORM\Column]
     private ?bool $isVisible = null;
@@ -117,16 +134,116 @@ class CampaignPromise
         return $this;
     }
 
-    public function getResultType(): ?string
+    public function getResultType(): ?CampaignPromiseResultType
     {
         return $this->resultType;
     }
 
-    public function setResultType(?string $resultType): static
+    public function setResultType(?CampaignPromiseResultType $resultType): static
     {
         $this->resultType = $resultType;
 
         return $this;
+    }
+
+    #[Groups(['promise:read'])]
+    public function getResultValue(): ?float
+    {
+        return $this->decimal($this->resultValue);
+    }
+
+    public function setResultValue(float|int|string|null $resultValue): static
+    {
+        $this->resultValue = $this->normalizeDecimal($resultValue);
+
+        return $this;
+    }
+
+    #[Groups(['promise:read'])]
+    #[Context([AbstractObjectNormalizer::SKIP_NULL_VALUES => false])]
+    public function getObjective(): ?float
+    {
+        if (CampaignPromiseResultType::Absolute !== $this->resultType) {
+            return null;
+        }
+
+        return $this->decimal($this->objective);
+    }
+
+    public function setObjective(float|int|string|null $objective): static
+    {
+        $this->objective = $this->normalizeDecimal($objective);
+
+        return $this;
+    }
+
+    public function getResultLabel(): ?string
+    {
+        return $this->resultLabel;
+    }
+
+    public function setResultLabel(?string $resultLabel): static
+    {
+        $resultLabel = null === $resultLabel ? null : trim($resultLabel);
+        $this->resultLabel = '' === $resultLabel ? null : $resultLabel;
+
+        return $this;
+    }
+
+    public function validateResult(ExecutionContextInterface $context): void
+    {
+        if (null === $this->resultType) {
+            if (null !== $this->resultValue || null !== $this->objective || null !== $this->resultLabel) {
+                $context->buildViolation('Une promesse sans chiffre ne peut pas avoir de valeur, d’objectif ou de libellé.')
+                    ->atPath('resultType')
+                    ->addViolation();
+            }
+
+            return;
+        }
+
+        if (null === $this->resultValue) {
+            $context->buildViolation('Indiquez la valeur atteinte.')
+                ->atPath('resultValue')
+                ->addViolation();
+        }
+
+        if (CampaignPromiseResultType::Percentage === $this->resultType) {
+            $value = $this->decimal($this->resultValue);
+            if (null !== $value && ($value < 0 || $value > 100)) {
+                $context->buildViolation('Le pourcentage doit être compris entre 0 et 100.')
+                    ->atPath('resultValue')
+                    ->addViolation();
+            }
+
+            if (null !== $this->objective || null !== $this->resultLabel) {
+                $context->buildViolation('Un pourcentage n’a ni objectif ni libellé.')
+                    ->atPath('resultType')
+                    ->addViolation();
+            }
+
+            return;
+        }
+
+        if (null === $this->objective) {
+            $context->buildViolation('Indiquez l’objectif.')
+                ->atPath('objective')
+                ->addViolation();
+        }
+    }
+
+    private function decimal(?string $value): ?float
+    {
+        return null === $value ? null : (float) $value;
+    }
+
+    private function normalizeDecimal(float|int|string|null $value): ?string
+    {
+        if (null === $value || '' === $value) {
+            return null;
+        }
+
+        return number_format((float) $value, 2, '.', '');
     }
 
     public function isVisible(): ?bool

@@ -5,6 +5,7 @@ namespace App\Tests;
 use App\Entity\CampaignPromise;
 use App\Entity\Source;
 use App\Entity\Theme;
+use App\Enum\CampaignPromiseResultType;
 use App\Enum\CampaignPromiseStatus;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -35,7 +36,10 @@ class CampaignPromiseTest extends WebTestCase
             ->setTitle('Construire des logements '.uniqid())
             ->setQuote('Nous construirons des logements abordables.')
             ->setStatus(CampaignPromiseStatus::Kept)
-            ->setResultType('loi')
+            ->setResultType(CampaignPromiseResultType::Absolute)
+            ->setResultValue(12000)
+            ->setObjective(60000)
+            ->setResultLabel('logements')
             ->setIllustration('logement.jpg')
             ->setIsVisible(true);
         $promise->addTheme($theme);
@@ -63,7 +67,10 @@ class CampaignPromiseTest extends WebTestCase
             self::assertIsArray($match);
             self::assertSame('kept', $match['status']);
             self::assertSame('/uploads/illustrations/logement.jpg', $match['illustration']);
-            self::assertArrayNotHasKey('resultType', $match);
+            self::assertSame('absolute', $match['resultType']);
+            self::assertEquals(12000, $match['resultValue']);
+            self::assertEquals(60000, $match['objective']);
+            self::assertSame('logements', $match['resultLabel']);
             $themes = json_encode($match['theme'] ?? [], \JSON_THROW_ON_ERROR);
             self::assertStringContainsString('Logement test', $themes);
             self::assertStringContainsString('mdi-home-city', $themes);
@@ -81,6 +88,40 @@ class CampaignPromiseTest extends WebTestCase
             $this->removePromise($promise->getId());
             $this->removePromise($hidden->getId());
             $this->removeTheme($theme->getId());
+        }
+    }
+
+    public function testPercentageResultOmitsObjective(): void
+    {
+        $client = static::createClient();
+        $manager = $this->manager();
+        $promise = (new CampaignPromise())
+            ->setTitle('Part des logements '.uniqid())
+            ->setQuote('Un quart du parc sera social.')
+            ->setStatus(CampaignPromiseStatus::InProgress)
+            ->setResultType(CampaignPromiseResultType::Percentage)
+            ->setResultValue(25)
+            ->setIsVisible(true);
+        $manager->persist($promise);
+        $manager->flush();
+
+        try {
+            $client->request('GET', '/api/campaign_promises/'.$promise->getId(), server: [
+                'HTTP_ACCEPT' => 'application/ld+json',
+            ]);
+
+            self::assertResponseIsSuccessful();
+            $content = $client->getResponse()->getContent();
+            self::assertIsString($content);
+            $decoded = json_decode($content, true, 512, \JSON_THROW_ON_ERROR);
+            self::assertIsArray($decoded);
+            self::assertSame('percentage', $decoded['resultType']);
+            self::assertEquals(25, $decoded['resultValue']);
+            self::assertArrayHasKey('objective', $decoded);
+            self::assertNull($decoded['objective']);
+            self::assertNull($decoded['resultLabel']);
+        } finally {
+            $this->removePromise($promise->getId());
         }
     }
 

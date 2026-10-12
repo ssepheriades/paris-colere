@@ -13,6 +13,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\CollectionField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
@@ -44,9 +45,22 @@ class CampaignPromiseCrudController extends AbstractCrudController
         yield TextField::new('title', 'Titre');
         yield TextareaField::new('quote', 'Citation')->hideOnIndex();
         yield ChoiceField::new('status', 'Statut');
-        yield TextField::new('resultType', 'Type de résultat')
+        yield ChoiceField::new('resultType', 'Chiffre')
+            ->setRequired(false)
+            ->hideOnIndex();
+        yield NumberField::new('resultValue', 'Valeur atteinte')
+            ->setRequired(false)
+            ->setNumDecimals(2)
+            ->hideOnIndex();
+        yield NumberField::new('objective', 'Objectif')
+            ->setRequired(false)
+            ->setNumDecimals(2)
+            ->setHelp('Seulement pour un nombre. L’objectif d’un pourcentage est 100.')
+            ->hideOnIndex();
+        yield TextField::new('resultLabel', 'Libellé')
             ->setRequired(false)
             ->setFormTypeOption('empty_data', null)
+            ->setHelp('Par exemple « logements » ou « € ». Seulement pour un nombre.')
             ->hideOnIndex();
         yield BooleanField::new('isVisible', 'Visible');
         yield $this->images->illustration()->setRequired(false);

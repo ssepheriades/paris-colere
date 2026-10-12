@@ -40,9 +40,54 @@
     </v-card>
 
     <template v-else>
-      <div class="promise-list">
+      <div v-if="statusFilters.length" class="status-filters">
+        <v-chip
+          color="primary"
+          size="small"
+          :variant="selectedStatus === null ? 'flat' : 'tonal'"
+          @click="clearFilters"
+        >
+          Tous
+        </v-chip>
+        <v-chip
+          v-for="filter in statusFilters"
+          :key="filter.value"
+          color="primary"
+          :prepend-icon="STATUS_ICONS[filter.value]"
+          size="small"
+          :variant="selectedStatus === filter.value ? 'flat' : 'tonal'"
+          @click="toggleStatus(filter.value)"
+        >
+          {{ filter.label }}
+        </v-chip>
+      </div>
+
+      <div v-if="themeFilters.length" class="status-filters">
+        <v-chip
+          v-for="theme in themeFilters"
+          :key="theme.id"
+          :color="theme.color ?? 'secondary'"
+          :prepend-icon="theme.icon || undefined"
+          size="small"
+          :variant="selectedThemeId === theme.id ? 'flat' : 'tonal'"
+          @click="toggleTheme(theme.id)"
+        >
+          {{ theme.name }}
+        </v-chip>
+      </div>
+
+      <v-card v-if="visiblePromises.length === 0" class="empty-card pa-8 text-center" rounded="xl">
+        <v-icon class="mb-3" color="primary" icon="mdi-filter-off-outline" size="40" />
+        <p class="text-h6 page-title mb-1">Aucune promesse</p>
+
+        <p class="text-body-2 text-medium-emphasis">
+          Rien ne correspond à ces filtres.
+        </p>
+      </v-card>
+
+      <div v-else class="promise-list">
         <v-card
-          v-for="promise in store.promises"
+          v-for="promise in visiblePromises"
           :key="promise.id"
           class="promise-card"
           rounded="xl"
@@ -84,6 +129,19 @@
                 {{ promise.quote }}
               </blockquote>
 
+              <div v-if="promise.result" class="promise-result">
+                <p class="promise-result-value">
+                  {{ resultText(promise.result) }}
+                </p>
+                <v-progress-linear
+                  v-if="resultProgress(promise.result) !== null"
+                  color="primary"
+                  height="6"
+                  :model-value="resultProgress(promise.result) ?? 0"
+                  rounded
+                />
+              </div>
+
               <ul v-if="promise.sources.length" class="source-list">
                 <li v-for="source in promise.sources" :key="source.id">
                   <a
@@ -115,11 +173,88 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, onMounted } from 'vue'
-  import { STATUS_ICONS, STATUS_LABELS, usePromisesStore } from '@/stores/promises'
+  import { computed, onMounted, ref } from 'vue'
+  import { STATUS_ICONS, STATUS_LABELS, usePromisesStore, type CampaignPromiseStatus, type PromiseResult, type Theme } from '@/stores/promises'
 
   const store = usePromisesStore()
   const pageCount = computed(() => Math.max(1, Math.ceil(store.total / store.pageSize)))
+  const selectedStatus = ref<CampaignPromiseStatus | null>(null)
+  const selectedThemeId = ref<string | null>(null)
+
+  const statusOrder = Object.keys(STATUS_LABELS) as CampaignPromiseStatus[]
+
+  const statusFilters = computed(() => {
+    const present = new Set(store.promises.map(promise => promise.status))
+
+    return statusOrder
+      .filter(status => present.has(status))
+      .map(value => ({
+        value,
+        label: STATUS_LABELS[value],
+      }))
+  })
+
+  const themeFilters = computed(() => {
+    const themes = new Map<string, Theme>()
+
+    for (const promise of store.promises) {
+      for (const theme of promise.themes) {
+        themes.set(theme.id, theme)
+      }
+    }
+
+    return [...themes.values()].sort((left, right) => left.name.localeCompare(right.name, 'fr'))
+  })
+
+  const visiblePromises = computed(() => store.promises.filter(promise => {
+    if (selectedStatus.value !== null && promise.status !== selectedStatus.value) {
+      return false
+    }
+
+    if (selectedThemeId.value !== null && !promise.themes.some(theme => theme.id === selectedThemeId.value)) {
+      return false
+    }
+
+    return true
+  }))
+
+  function toggleStatus (status: CampaignPromiseStatus) {
+    selectedStatus.value = selectedStatus.value === status ? null : status
+  }
+
+  function toggleTheme (themeId: string) {
+    selectedThemeId.value = selectedThemeId.value === themeId ? null : themeId
+  }
+
+  function clearFilters () {
+    selectedStatus.value = null
+    selectedThemeId.value = null
+  }
+
+  const numberFormat = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 })
+
+  function resultText (result: PromiseResult): string {
+    if (result.resultType === 'percentage') {
+      return `${numberFormat.format(result.resultValue)} %`
+    }
+
+    const objective = result.objective === null ? '' : ` / ${numberFormat.format(result.objective)}`
+    const label = result.resultLabel ? ` ${result.resultLabel}` : ''
+
+    return `${numberFormat.format(result.resultValue)}${objective}${label}`
+  }
+
+  function resultProgress (result: PromiseResult): number | null {
+    if (result.resultType === 'percentage') {
+      return Math.min(100, Math.max(0, result.resultValue))
+    }
+
+    if (result.objective === null || result.objective <= 0) {
+      return null
+    }
+
+    return Math.min(100, Math.max(0, (result.resultValue / result.objective) * 100))
+  }
 
   function httpUrl (value: string | null): string | null {
     if (!value) {
@@ -153,6 +288,17 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .status-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .status-filters :deep(.v-chip) {
+    cursor: pointer;
   }
 
   .promise-card {
@@ -245,6 +391,15 @@
     font-size: 1.05rem;
     font-style: italic;
     line-height: 1.45;
+  }
+
+  .promise-result {
+    margin-top: 1rem;
+  }
+
+  .promise-result-value {
+    margin: 0 0 0.4rem;
+    font-weight: 600;
   }
 
   .source-list {

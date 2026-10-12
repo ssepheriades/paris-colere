@@ -11,7 +11,7 @@ class ThemeFixtures extends Fixture
     public function load(ObjectManager $manager): void
     {
         foreach (ParisThemesCatalog::themes() as $data) {
-            $this->upsertTheme($manager, $data['name'], $data['color'], $data['shortDescription']);
+            $this->upsertTheme($manager, $data['name'], $data['color'], $data['icon'], $data['shortDescription']);
         }
 
         $manager->flush();
@@ -21,10 +21,12 @@ class ThemeFixtures extends Fixture
         ObjectManager $manager,
         string $name,
         string $color,
+        string $icon,
         string $shortDescription,
     ): void {
         $this->limit($name, 32, 'Nom de thème');
         $this->limit($color, 16, 'Couleur de thème');
+        $this->limit($icon, 64, 'Icône de thème');
         $this->limit($shortDescription, 128, 'Description courte de thème');
 
         $theme = $manager->getRepository(Theme::class)->findOneBy(['name' => $name]);
@@ -35,6 +37,7 @@ class ThemeFixtures extends Fixture
         }
 
         $theme->setColor($color);
+        $theme->setIcon($icon);
         $theme->setShortDescription($shortDescription);
     }
 
