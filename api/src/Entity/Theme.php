@@ -24,19 +24,23 @@ class Theme
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['theme:read', 'controversy:read'])]
+    #[Groups(['theme:read', 'controversy:read', 'promise:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 32)]
-    #[Groups(['theme:read', 'controversy:read'])]
+    #[Groups(['theme:read', 'controversy:read', 'promise:read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 16, nullable: true)]
-    #[Groups(['theme:read', 'controversy:read'])]
+    #[Groups(['theme:read', 'controversy:read', 'promise:read'])]
     private ?string $color = null;
 
+    #[ORM\Column(length: 64, nullable: true)]
+    #[Groups(['theme:read', 'controversy:read', 'promise:read'])]
+    private ?string $icon = null;
+
     #[ORM\Column(length: 128)]
-    #[Groups(['theme:read', 'controversy:read'])]
+    #[Groups(['theme:read', 'controversy:read', 'promise:read'])]
     private ?string $shortDescription = null;
 
     /**
@@ -45,9 +49,16 @@ class Theme
     #[ORM\ManyToMany(targetEntity: Controversy::class, mappedBy: 'theme')]
     private Collection $controversies;
 
+    /**
+     * @var Collection<int, CampaignPromise>
+     */
+    #[ORM\ManyToMany(targetEntity: CampaignPromise::class, mappedBy: 'theme')]
+    private Collection $campaignPromises;
+
     public function __construct()
     {
         $this->controversies = new ArrayCollection();
+        $this->campaignPromises = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -75,6 +86,18 @@ class Theme
     public function setColor(?string $color): static
     {
         $this->color = $color;
+
+        return $this;
+    }
+
+    public function getIcon(): ?string
+    {
+        return $this->icon;
+    }
+
+    public function setIcon(?string $icon): static
+    {
+        $this->icon = $icon;
 
         return $this;
     }
@@ -113,6 +136,33 @@ class Theme
     {
         if ($this->controversies->removeElement($controversy)) {
             $controversy->removeTheme($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, CampaignPromise>
+     */
+    public function getCampaignPromises(): Collection
+    {
+        return $this->campaignPromises;
+    }
+
+    public function addCampaignPromise(CampaignPromise $campaignPromise): static
+    {
+        if (!$this->campaignPromises->contains($campaignPromise)) {
+            $this->campaignPromises->add($campaignPromise);
+            $campaignPromise->addTheme($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCampaignPromise(CampaignPromise $campaignPromise): static
+    {
+        if ($this->campaignPromises->removeElement($campaignPromise)) {
+            $campaignPromise->removeTheme($this);
         }
 
         return $this;

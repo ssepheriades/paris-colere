@@ -34,6 +34,10 @@ class ThemeCrudController extends AbstractCrudController
         yield TextField::new('name', 'Nom');
         yield TextField::new('shortDescription', 'Description courte');
         yield ColorField::new('color', 'Couleur')->setRequired(false);
+        yield TextField::new('icon', 'Icône')
+            ->setRequired(false)
+            ->setFormTypeOption('empty_data', null)
+            ->setHelp('Nom d’icône Material Design, par exemple mdi-home-city.');
         yield AssociationField::new('controversies', 'Affaires')->onlyOnIndex();
     }
 }

@@ -9,6 +9,10 @@
         Affaires
       </v-btn>
 
+      <v-btn to="/promesses" variant="text">
+        Promesses
+      </v-btn>
+
       <v-btn variant="text" @click="contact.open()">
         Contact
       </v-btn>

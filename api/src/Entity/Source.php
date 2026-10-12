@@ -22,42 +22,45 @@ class Source
     #[ORM\Column(type: UuidType::NAME, unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
-    #[Groups(['controversy:read'])]
+    #[Groups(['controversy:read', 'promise:read'])]
     private ?Uuid $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'sources')]
     private ?ControversyItem $controversyItem = null;
 
+    #[ORM\ManyToOne(inversedBy: 'sources')]
+    private ?CampaignPromise $campaignPromise = null;
+
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(['controversy:read'])]
+    #[Groups(['controversy:read', 'promise:read'])]
     private ?string $url = null;
 
     #[ORM\Column(length: 32, enumType: SourceProvider::class, options: ['default' => 'link'])]
-    #[Groups(['controversy:read'])]
+    #[Groups(['controversy:read', 'promise:read'])]
     private SourceProvider $provider = SourceProvider::Link;
 
     #[ORM\Column(length: 64, nullable: true)]
-    #[Groups(['controversy:read'])]
+    #[Groups(['controversy:read', 'promise:read'])]
     private ?string $externalId = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['controversy:read'])]
+    #[Groups(['controversy:read', 'promise:read'])]
     private ?string $title = null;
 
     #[ORM\Column(length: 2048, nullable: true)]
-    #[Groups(['controversy:read'])]
+    #[Groups(['controversy:read', 'promise:read'])]
     private ?string $thumbnailUrl = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['controversy:read'])]
+    #[Groups(['controversy:read', 'promise:read'])]
     private ?string $authorName = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['controversy:read'])]
+    #[Groups(['controversy:read', 'promise:read'])]
     private ?string $embedText = null;
 
     #[ORM\Column]
-    #[Groups(['controversy:read'])]
+    #[Groups(['controversy:read', 'promise:read'])]
     private ?bool $isVisible = null;
 
     public function getId(): ?Uuid
@@ -73,6 +76,18 @@ class Source
     public function setControversyItem(?ControversyItem $controversyItem): static
     {
         $this->controversyItem = $controversyItem;
+
+        return $this;
+    }
+
+    public function getCampaignPromise(): ?CampaignPromise
+    {
+        return $this->campaignPromise;
+    }
+
+    public function setCampaignPromise(?CampaignPromise $campaignPromise): static
+    {
+        $this->campaignPromise = $campaignPromise;
 
         return $this;
     }
@@ -176,7 +191,7 @@ class Source
         return $this->isVisible;
     }
 
-    #[Groups(['controversy:read'])]
+    #[Groups(['controversy:read', 'promise:read'])]
     public function getIsVisible(): ?bool
     {
         return $this->isVisible;

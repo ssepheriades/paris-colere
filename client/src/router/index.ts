@@ -11,6 +11,7 @@ import AffairesShow from '@/pages/affaires/show.vue'
 import Home from '@/pages/home.vue'
 import PeopleIndex from '@/pages/people/index.vue'
 import PeopleShow from '@/pages/people/show.vue'
+import PromessesIndex from '@/pages/promesses/index.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -34,6 +35,10 @@ const router = createRouter({
     {
       path: '/affaires/:id',
       component: AffairesShow,
+    },
+    {
+      path: '/promesses',
+      component: PromessesIndex,
     },
   ],
 })

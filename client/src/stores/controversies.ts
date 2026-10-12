@@ -6,6 +6,7 @@ export interface Theme {
   name: string
   shortDescription: string | null
   color: string | null
+  icon: string | null
 }
 
 export interface KeyFigure {
@@ -100,6 +101,7 @@ function parseTheme (value: unknown): Theme | null {
     name,
     shortDescription: stringOrNull(record.shortDescription),
     color: stringOrNull(record.color),
+    icon: stringOrNull(record.icon),
   }
 }
 

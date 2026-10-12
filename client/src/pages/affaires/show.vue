@@ -47,6 +47,7 @@
           v-for="theme in store.controversy.themes"
           :key="theme.id"
           :color="theme.color ?? 'secondary'"
+          :prepend-icon="theme.icon || undefined"
           size="small"
           :variant="theme.color ? 'flat' : 'tonal'"
         >

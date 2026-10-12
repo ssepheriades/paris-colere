@@ -6,6 +6,7 @@ use ApiPlatform\Doctrine\Orm\Extension\QueryCollectionExtensionInterface;
 use ApiPlatform\Doctrine\Orm\Extension\QueryItemExtensionInterface;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
+use App\Entity\CampaignPromise;
 use App\Entity\Controversy;
 use App\Entity\ControversyItem;
 use App\Entity\Person;
@@ -18,6 +19,7 @@ final class VisibleOnlyExtension implements QueryCollectionExtensionInterface, Q
      * @var list<class-string>
      */
     private const RESOURCE_CLASSES = [
+        CampaignPromise::class,
         Controversy::class,
         Person::class,
         ControversyItem::class,
