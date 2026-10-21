@@ -87,23 +87,53 @@ class SmokeTest extends WebTestCase
         ];
 
         $client->request('POST', '/api/people', server: $server, content: '{}');
-        self::assertResponseStatusCodeSame(405);
+        self::assertResponseStatusCodeSame(401);
 
-        $client->request('PATCH', '/api/people/00000000-0000-0000-0000-000000000001', server: $server, content: '{}');
-        self::assertResponseStatusCodeSame(405);
+        $client->request('PATCH', '/api/people/00000000-0000-0000-0000-000000000001', server: [
+            'CONTENT_TYPE' => 'application/merge-patch+json',
+            'HTTP_ACCEPT' => 'application/ld+json',
+        ], content: '{}');
+        self::assertResponseStatusCodeSame(401);
 
         $client->request('DELETE', '/api/controversies/00000000-0000-0000-0000-000000000001', server: $server);
-        self::assertResponseStatusCodeSame(405);
+        self::assertResponseStatusCodeSame(401);
     }
 
-    public function testKeyFiguresAreNotAResource(): void
+    public function testHiddenKeyFigureIsNotReadableWithoutToken(): void
     {
         $client = static::createClient();
-        $client->request('GET', '/api/key_figures', server: [
-            'HTTP_ACCEPT' => 'application/ld+json',
-        ]);
+        $controversy = $this->persistControversy('Affaire chiffres', true);
+        $manager = $this->manager();
+        $controversy = $manager->find(Controversy::class, $controversy->getId());
+        self::assertInstanceOf(Controversy::class, $controversy);
 
-        self::assertResponseStatusCodeSame(404);
+        $hidden = (new KeyFigure())
+            ->setFigure('99')
+            ->setLabel('Chiffre ressource masqué')
+            ->setPriority(1)
+            ->setIsVisible(false);
+        $controversy->addKeyFigure($hidden);
+        $manager->flush();
+
+        try {
+            $client->request('GET', '/api/key_figures', server: [
+                'HTTP_ACCEPT' => 'application/ld+json',
+            ]);
+            self::assertResponseIsSuccessful();
+
+            $client->request('GET', '/api/key_figures/'.$hidden->getId(), server: [
+                'HTTP_ACCEPT' => 'application/ld+json',
+            ]);
+            self::assertResponseStatusCodeSame(404);
+
+            $client->request('POST', '/api/key_figures', server: [
+                'CONTENT_TYPE' => 'application/ld+json',
+                'HTTP_ACCEPT' => 'application/ld+json',
+            ], content: '{}');
+            self::assertResponseStatusCodeSame(401);
+        } finally {
+            $this->removeControversy($controversy->getId());
+        }
     }
 
     public function testHiddenControversyIsNotReadable(): void

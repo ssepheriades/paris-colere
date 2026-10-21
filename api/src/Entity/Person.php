@@ -4,9 +4,14 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use App\Repository\PersonRepository;
+use App\Security\ApiAccess;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -15,14 +20,20 @@ use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PersonRepository::class)]
 #[ApiResource(
     operations: [
         new Get(),
         new GetCollection(),
+        new Post(security: ApiAccess::WRITE),
+        new Put(security: ApiAccess::WRITE),
+        new Patch(security: ApiAccess::WRITE),
+        new Delete(security: ApiAccess::WRITE),
     ],
     normalizationContext: ['groups' => ['person:read']],
+    denormalizationContext: ['groups' => ['api:write']],
 )]
 class Person
 {
@@ -34,11 +45,15 @@ class Person
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 64)]
-    #[Groups(['person:read', 'controversy:read'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 64)]
+    #[Groups(['person:read', 'controversy:read', 'api:write'])]
     private ?string $firstname = null;
 
     #[ORM\Column(length: 64)]
-    #[Groups(['person:read', 'controversy:read'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 64)]
+    #[Groups(['person:read', 'controversy:read', 'api:write'])]
     private ?string $lastname = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -49,7 +64,7 @@ class Person
      * @var Collection<int, Party>
      */
     #[ORM\ManyToMany(targetEntity: Party::class, inversedBy: 'people')]
-    #[Groups(['person:read'])]
+    #[Groups(['person:read', 'api:write'])]
     private Collection $party;
 
     /**
@@ -67,19 +82,24 @@ class Person
     private Collection $controversyItems;
 
     #[ORM\Column(length: 128)]
-    #[Groups(['person:read', 'controversy:read'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 128)]
+    #[Groups(['person:read', 'controversy:read', 'api:write'])]
     private ?string $shortDescription = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['person:read'])]
+    #[Groups(['person:read', 'api:write'])]
     private ?string $bio = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['person:read'])]
+    #[Assert\Length(max: 255)]
+    #[Groups(['person:read', 'api:write'])]
     private ?string $wikiUrl = null;
 
     #[ORM\Column]
-    private ?bool $isVisible = null;
+    #[Assert\NotNull]
+    #[Groups(['person:read', 'api:write'])]
+    private ?bool $isVisible = false;
 
     public function __construct()
     {
@@ -276,6 +296,14 @@ class Person
         return $this->isVisible;
     }
 
+    #[Groups(['person:read'])]
+    #[SerializedName('isVisible')]
+    public function getIsVisible(): ?bool
+    {
+        return $this->isVisible;
+    }
+
+    #[Groups(['api:write'])]
     public function setIsVisible(bool $isVisible): static
     {
         $this->isVisible = $isVisible;

@@ -4,10 +4,15 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use App\Enum\ControversyItemType;
 use App\Repository\ControversyItemRepository;
+use App\Security\ApiAccess;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -17,14 +22,20 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ControversyItemRepository::class)]
 #[ApiResource(
     operations: [
         new Get(),
         new GetCollection(),
+        new Post(security: ApiAccess::WRITE),
+        new Put(security: ApiAccess::WRITE),
+        new Patch(security: ApiAccess::WRITE),
+        new Delete(security: ApiAccess::WRITE),
     ],
     normalizationContext: ['groups' => ['controversy:read']],
+    denormalizationContext: ['groups' => ['api:write']],
 )]
 class ControversyItem
 {
@@ -36,15 +47,19 @@ class ControversyItem
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 32, enumType: ControversyItemType::class)]
-    #[Groups(['controversy:read'])]
+    #[Assert\NotNull]
+    #[Groups(['controversy:read', 'api:write'])]
     private ?ControversyItemType $type = null;
 
     #[ORM\Column(length: 128)]
-    #[Groups(['controversy:read'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 128)]
+    #[Groups(['controversy:read', 'api:write'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Groups(['controversy:read'])]
+    #[Assert\NotNull]
+    #[Groups(['controversy:read', 'api:write'])]
     private ?\DateTime $date = null;
 
     /**
@@ -54,20 +69,26 @@ class ControversyItem
     private Collection $sources;
 
     #[ORM\Column]
-    private ?bool $isVisible = null;
+    #[Assert\NotNull]
+    #[Groups(['controversy:read', 'api:write'])]
+    private ?bool $isVisible = false;
 
     #[ORM\ManyToOne(inversedBy: 'controversyItems')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull]
+    #[Groups(['api:write'])]
     private ?Controversy $controversy = null;
 
     /**
      * @var Collection<int, Person>
      */
     #[ORM\ManyToMany(targetEntity: Person::class, inversedBy: 'controversyItems')]
+    #[Groups(['api:write'])]
+    #[ApiProperty(readable: false)]
     private Collection $people;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['controversy:read'])]
+    #[Groups(['controversy:read', 'api:write'])]
     private ?string $shortDescription = null;
 
     public function __construct()
@@ -161,6 +182,14 @@ class ControversyItem
         return $this->isVisible;
     }
 
+    #[Groups(['controversy:read'])]
+    #[SerializedName('isVisible')]
+    public function getIsVisible(): ?bool
+    {
+        return $this->isVisible;
+    }
+
+    #[Groups(['api:write'])]
     public function setIsVisible(bool $isVisible): static
     {
         $this->isVisible = $isVisible;

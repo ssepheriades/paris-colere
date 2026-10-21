@@ -15,7 +15,9 @@ security:
         api:
             pattern: ^/api(?!/docs)
             stateless: true
-            security: false
+            access_token:
+                token_handler: App\Security\ApiTokenHandler
+                token_extractors: header
         main:
             lazy: true
             provider: app_user_provider

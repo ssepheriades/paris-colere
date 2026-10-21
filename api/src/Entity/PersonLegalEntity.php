@@ -3,17 +3,33 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use App\Repository\PersonLegalEntityRepository;
+use App\Security\ApiAccess;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PersonLegalEntityRepository::class)]
-#[ApiResource(operations: [new Get(), new GetCollection()])]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Post(security: ApiAccess::WRITE),
+        new Put(security: ApiAccess::WRITE),
+        new Patch(security: ApiAccess::WRITE),
+        new Delete(security: ApiAccess::WRITE),
+    ],
+    denormalizationContext: ['groups' => ['api:write']],
+)]
 class PersonLegalEntity
 {
     #[ORM\Id]
@@ -25,23 +41,28 @@ class PersonLegalEntity
 
     #[ORM\ManyToOne(inversedBy: 'personLegalEntities')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull]
+    #[Groups(['api:write'])]
     private ?Person $person = null;
 
     #[ORM\ManyToOne(inversedBy: 'personLegalEntities')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['person:read'])]
+    #[Assert\NotNull]
+    #[Groups(['person:read', 'api:write'])]
     private ?LegalEntity $legalEntity = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    #[Groups(['person:read'])]
+    #[Assert\NotNull]
+    #[Groups(['person:read', 'api:write'])]
     private ?\DateTime $startDate = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    #[Groups(['person:read'])]
+    #[Groups(['person:read', 'api:write'])]
     private ?\DateTime $endDate = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['person:read'])]
+    #[Assert\Length(max: 255)]
+    #[Groups(['person:read', 'api:write'])]
     private ?string $position = null;
 
     public function getId(): ?Uuid

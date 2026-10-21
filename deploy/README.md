@@ -101,6 +101,8 @@ openssl rand -hex 32   # APP_SECRET, POSTGRES_PASSWORD
 
 `ADMIN_EMAIL` / `ADMIN_PASSWORD` : compte EasyAdmin en prod (pas les valeurs de dev).
 
+`API_TOKEN` : jeton statique des écritures `/api` (`Authorization: Bearer …`). Le laisser vide désactive l’authentification par jeton : les lectures publiques restent ouvertes, et aucun `Bearer` (même vide) n’obtient le rôle `ROLE_API`. Générer une valeur avec `openssl rand -hex 32` (lettres, chiffres et `- _ + ~ / .` uniquement). Les fichiers Compose (`api/compose.yaml`, `deploy/compose.server.yaml`, `deploy/compose.frankenphp.yaml`) transmettent la variable au conteneur PHP. Après modification, recréer le conteneur (`docker compose up -d`) suffit : la valeur n’est pas figée dans l’image. Le détail des ressources et un exemple `curl` sont dans le [README](../README.md).
+
 ## 4. nginx + certificat
 
 ```bash

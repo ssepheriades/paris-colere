@@ -4,9 +4,14 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use App\Repository\ControversyRepository;
+use App\Security\ApiAccess;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -14,14 +19,20 @@ use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ControversyRepository::class)]
 #[ApiResource(
     operations: [
         new Get(),
         new GetCollection(),
+        new Post(security: ApiAccess::WRITE),
+        new Put(security: ApiAccess::WRITE),
+        new Patch(security: ApiAccess::WRITE),
+        new Delete(security: ApiAccess::WRITE),
     ],
     normalizationContext: ['groups' => ['controversy:read']],
+    denormalizationContext: ['groups' => ['api:write']],
 )]
 class Controversy
 {
@@ -33,11 +44,15 @@ class Controversy
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 64)]
-    #[Groups(['controversy:read'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 64)]
+    #[Groups(['controversy:read', 'api:write'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['controversy:read'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 255)]
+    #[Groups(['controversy:read', 'api:write'])]
     private ?string $shortDescription = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -55,11 +70,13 @@ class Controversy
      * @var Collection<int, Theme>
      */
     #[ORM\ManyToMany(targetEntity: Theme::class, inversedBy: 'controversies')]
-    #[Groups(['controversy:read'])]
+    #[Groups(['controversy:read', 'api:write'])]
     private Collection $theme;
 
     #[ORM\Column]
-    private ?bool $isVisible = null;
+    #[Assert\NotNull]
+    #[Groups(['controversy:read', 'api:write'])]
+    private ?bool $isVisible = false;
 
     /**
      * @var Collection<int, KeyFigure>
@@ -207,6 +224,14 @@ class Controversy
         return $this->isVisible;
     }
 
+    #[Groups(['controversy:read'])]
+    #[SerializedName('isVisible')]
+    public function getIsVisible(): ?bool
+    {
+        return $this->isVisible;
+    }
+
+    #[Groups(['api:write'])]
     public function setIsVisible(bool $isVisible): static
     {
         $this->isVisible = $isVisible;
