@@ -68,10 +68,12 @@ Sans jeton, les fiches `isVisible: false` sont absentes (404 sur l’item, omise
 | Fonctions | `/api/person_legal_entities` | GET | POST PUT PATCH DELETE | `person`, `legalEntity` (IRI), `startDate`, `endDate` (`YYYY-MM-DD`), `position` |
 | Promesses | `/api/campaign_promises` | GET | POST PUT PATCH DELETE | `title`, `quote`, `status` (`kept`, `partial`, `broken`, `in_progress`), `resultType` (`absolute`, `percentage`), `resultValue`, `objective`, `resultLabel`, `isVisible`, `theme` (IRI). `illustration` en lecture |
 | Affaires | `/api/controversies` | GET | POST PUT PATCH DELETE | `name` (64), `shortDescription` (255), `isVisible`, `theme` (IRI). `illustration` en lecture |
-| Faits | `/api/controversy_items` | GET | POST PUT PATCH DELETE | `type` (`fact`, `statement`, `publication`), `title`, `date`, `shortDescription`, `isVisible`, `controversy` (IRI), `people` (IRI) |
+| Faits | `/api/controversy_items` | GET | POST PUT PATCH DELETE | `type` (`fact`, `statement`, `publication`), `title`, `date` (`YYYY-MM-DD`), `datePrecision` (`day`, `month`, `year`), `shortDescription`, `isVisible`, `controversy` (IRI), `people` (IRI) |
 | Sources | `/api/sources` | GET | POST PUT PATCH DELETE | `url`, `isVisible`, `controversyItem` ou `campaignPromise` (IRI). `provider` (`link`, `youtube`, `dailymotion`, `vimeo`, `tweet`), titre et vignette sont déduits de l’URL |
 | Chiffres clés | `/api/key_figures` | GET | POST PUT PATCH DELETE | `figure` (32), `label` (64), `subLabel`, `priority`, `isVisible`, `controversy` (IRI) |
 | Contact | `/api/contacts` | — | POST public | `name`, `email`, `message`, `controversy` (IRI, optionnel). 5 envois par heure et par IP |
+
+`datePrecision` dit ce que signifie `date` sur un fait. `day` est un jour exact (`12 janvier 2019`). `month` veut dire « en mai 2025 » : le jour enregistré est le 1er de ce mois. `year` veut dire « en 2025 » : la date enregistrée est le 1er janvier. Si `datePrecision` est omis à l’écriture, la valeur est `day`. Toute autre valeur est refusée. Le tri des faits reste basé sur `date`. Les dates de fonction (`startDate`, `endDate`) restent des jours exacts : ce ne sont pas des dates d’événement.
 
 Pour un pourcentage, `resultValue` est entre 0 et 100, sans `objective` ni `resultLabel`. Pour un nombre (`absolute`), `resultValue` et `objective` sont requis. Une promesse sans `resultType` n’a aucun de ces trois champs.
 

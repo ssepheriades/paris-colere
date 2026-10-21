@@ -1,3 +1,4 @@
+import type { DatePrecision } from '@/utils/formatEventDate'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
@@ -43,6 +44,7 @@ export interface ControversyItem {
   type: string
   title: string
   date: string
+  datePrecision: DatePrecision
   shortDescription: string | null
   people: ItemPerson[]
   sources: Source[]
@@ -245,10 +247,19 @@ function parseItem (value: unknown): ControversyItem | null {
     type,
     title,
     date,
+    datePrecision: parseDatePrecision(record.datePrecision),
     shortDescription: stringOrNull(record.shortDescription),
     people: parseItemPeople(record.people),
     sources: parseSources(record.sources),
   }
+}
+
+const DATE_PRECISIONS = ['day', 'month', 'year'] as const
+
+function parseDatePrecision (value: unknown): DatePrecision {
+  const precision = DATE_PRECISIONS.find(candidate => candidate === value)
+
+  return precision ?? 'day'
 }
 
 function parseItems (value: unknown): ControversyItem[] {

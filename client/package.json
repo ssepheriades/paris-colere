@@ -10,7 +10,8 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "lint": "eslint",
-    "lint:fix": "eslint --fix"
+    "lint:fix": "eslint --fix",
+    "test": "node --experimental-strip-types --test src/utils/__tests__/formatEventDate.test.ts"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.2.9",

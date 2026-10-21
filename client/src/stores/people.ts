@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { formatEventDate } from '@/utils/formatEventDate'
 
 export interface LegalEntitySummary {
   id: string
@@ -148,16 +149,7 @@ export function initials (person: Pick<Person, 'firstname' | 'lastname'>): strin
 }
 
 export function formatDate (value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(date)
+  return formatEventDate(value, 'day')
 }
 
 export function formatRange (mandate: PersonMandate): string {

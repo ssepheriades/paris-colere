@@ -11,6 +11,7 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Enum\ControversyItemType;
+use App\Enum\DatePrecision;
 use App\Repository\ControversyItemRepository;
 use App\Security\ApiAccess;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -25,6 +26,7 @@ use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ControversyItemRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 #[ApiResource(
     operations: [
         new Get(),
@@ -61,6 +63,16 @@ class ControversyItem
     #[Assert\NotNull]
     #[Groups(['controversy:read', 'api:write'])]
     private ?\DateTime $date = null;
+
+    /**
+     * How much of `date` is meaningful. Month precision stores the 1st of that
+     * month, year precision stores January 1st, so ordering on `date` still works.
+     */
+    #[ORM\Column(length: 16, enumType: DatePrecision::class, options: ['default' => 'day'])]
+    #[Assert\NotNull]
+    #[ApiProperty(description: 'Précision de `date` : `day` (jour exact), `month` (le jour stocké est le 1er du mois) ou `year` (la date stockée est le 1er janvier).')]
+    #[Groups(['controversy:read', 'api:write'])]
+    private DatePrecision $datePrecision = DatePrecision::Day;
 
     /**
      * @var Collection<int, Source>
@@ -133,9 +145,49 @@ class ControversyItem
 
     public function setDate(\DateTime $date): static
     {
-        $this->date = $date;
+        $this->date = \DateTime::createFromInterface($date);
 
         return $this;
+    }
+
+    public function getDatePrecision(): DatePrecision
+    {
+        return $this->datePrecision;
+    }
+
+    public function setDatePrecision(DatePrecision $datePrecision): static
+    {
+        $this->datePrecision = $datePrecision;
+
+        return $this;
+    }
+
+    /**
+     * Runs once both fields are set. Month precision keeps the 1st of that month,
+     * year precision keeps January 1st. Doing it here avoids dropping a newly
+     * submitted day when the previous precision was coarser.
+     */
+    #[ORM\PrePersist]
+    #[ORM\PreUpdate]
+    public function normalizeStoredDate(): void
+    {
+        if (!$this->date instanceof \DateTime) {
+            return;
+        }
+
+        $year = (int) $this->date->format('Y');
+        $month = DatePrecision::Year === $this->datePrecision ? 1 : (int) $this->date->format('n');
+        $day = DatePrecision::Day === $this->datePrecision ? (int) $this->date->format('j') : 1;
+        $normalizedValue = sprintf('%04d-%02d-%02d', $year, $month, $day);
+
+        if ($this->date->format('Y-m-d') === $normalizedValue) {
+            return;
+        }
+
+        $normalized = \DateTime::createFromFormat('!Y-m-d', $normalizedValue);
+        if ($normalized instanceof \DateTime) {
+            $this->date = $normalized;
+        }
     }
 
     /**
