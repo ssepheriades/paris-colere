@@ -9,6 +9,7 @@ services:
       CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-^https://paris-colere\.org$}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      API_TOKEN: ${API_TOKEN:-}
     volumes:
       - paris_colere_uploads:/app/public/uploads
       - ${CLIENT_DIST:-../client/dist}:/app/client-dist:ro

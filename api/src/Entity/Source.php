@@ -3,19 +3,35 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use App\Enum\SourceProvider;
 use App\Repository\SourceRepository;
+use App\Security\ApiAccess;
 use App\Service\ResolvedEmbed;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: SourceRepository::class)]
-#[ApiResource(operations: [new Get(), new GetCollection()])]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Post(security: ApiAccess::WRITE),
+        new Put(security: ApiAccess::WRITE),
+        new Patch(security: ApiAccess::WRITE),
+        new Delete(security: ApiAccess::WRITE),
+    ],
+    denormalizationContext: ['groups' => ['api:write']],
+)]
 class Source
 {
     #[ORM\Id]
@@ -26,13 +42,16 @@ class Source
     private ?Uuid $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'sources')]
+    #[Groups(['api:write'])]
     private ?ControversyItem $controversyItem = null;
 
     #[ORM\ManyToOne(inversedBy: 'sources')]
+    #[Groups(['api:write'])]
     private ?CampaignPromise $campaignPromise = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(['controversy:read', 'promise:read'])]
+    #[Assert\NotBlank]
+    #[Groups(['controversy:read', 'promise:read', 'api:write'])]
     private ?string $url = null;
 
     #[ORM\Column(length: 32, enumType: SourceProvider::class, options: ['default' => 'link'])]
@@ -60,8 +79,9 @@ class Source
     private ?string $embedText = null;
 
     #[ORM\Column]
-    #[Groups(['controversy:read', 'promise:read'])]
-    private ?bool $isVisible = null;
+    #[Assert\NotNull]
+    #[Groups(['controversy:read', 'promise:read', 'api:write'])]
+    private ?bool $isVisible = false;
 
     public function getId(): ?Uuid
     {
@@ -197,6 +217,7 @@ class Source
         return $this->isVisible;
     }
 
+    #[Groups(['api:write'])]
     public function setIsVisible(bool $isVisible): static
     {
         $this->isVisible = $isVisible;

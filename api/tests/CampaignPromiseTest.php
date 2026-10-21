@@ -83,7 +83,7 @@ class CampaignPromiseTest extends WebTestCase
                 'CONTENT_TYPE' => 'application/ld+json',
                 'HTTP_ACCEPT' => 'application/ld+json',
             ], content: '{}');
-            self::assertResponseStatusCodeSame(405);
+            self::assertResponseStatusCodeSame(401);
         } finally {
             $this->removePromise($promise->getId());
             $this->removePromise($hidden->getId());

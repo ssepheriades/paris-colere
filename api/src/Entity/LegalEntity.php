@@ -4,10 +4,15 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use App\Enum\LegalEntityType;
 use App\Repository\LegalEntityRepository;
+use App\Security\ApiAccess;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -15,9 +20,20 @@ use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: LegalEntityRepository::class)]
-#[ApiResource(operations: [new Get(), new GetCollection()])]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Post(security: ApiAccess::WRITE),
+        new Put(security: ApiAccess::WRITE),
+        new Patch(security: ApiAccess::WRITE),
+        new Delete(security: ApiAccess::WRITE),
+    ],
+    denormalizationContext: ['groups' => ['api:write']],
+)]
 class LegalEntity
 {
     #[ORM\Id]
@@ -28,18 +44,25 @@ class LegalEntity
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 64)]
-    #[Groups(['person:read'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 64)]
+    #[Groups(['person:read', 'api:write'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['person:read'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 255)]
+    #[Groups(['person:read', 'api:write'])]
     private ?string $shortDescription = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Assert\Length(max: 255)]
+    #[Groups(['api:write'])]
     private ?string $website = null;
 
     #[ORM\Column(length: 32, enumType: LegalEntityType::class)]
-    #[Groups(['person:read'])]
+    #[Assert\NotNull]
+    #[Groups(['person:read', 'api:write'])]
     private ?LegalEntityType $type = null;
 
     #[ORM\Column(length: 255, nullable: true)]

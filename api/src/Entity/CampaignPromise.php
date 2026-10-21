@@ -4,11 +4,16 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use App\Enum\CampaignPromiseResultType;
 use App\Enum\CampaignPromiseStatus;
 use App\Repository\CampaignPromiseRepository;
+use App\Security\ApiAccess;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -29,8 +34,13 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
     operations: [
         new Get(),
         new GetCollection(),
+        new Post(security: ApiAccess::WRITE),
+        new Put(security: ApiAccess::WRITE),
+        new Patch(security: ApiAccess::WRITE),
+        new Delete(security: ApiAccess::WRITE),
     ],
     normalizationContext: ['groups' => ['promise:read']],
+    denormalizationContext: ['groups' => ['api:write']],
 )]
 class CampaignPromise
 {
@@ -42,33 +52,42 @@ class CampaignPromise
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['promise:read'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 255)]
+    #[Groups(['promise:read', 'api:write'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(['promise:read'])]
+    #[Assert\NotBlank]
+    #[Groups(['promise:read', 'api:write'])]
     private ?string $quote = null;
 
     #[ORM\Column(length: 16, enumType: CampaignPromiseStatus::class)]
-    #[Groups(['promise:read'])]
+    #[Assert\NotNull]
+    #[Groups(['promise:read', 'api:write'])]
     private ?CampaignPromiseStatus $status = null;
 
     #[ORM\Column(length: 16, nullable: true, enumType: CampaignPromiseResultType::class)]
-    #[Groups(['promise:read'])]
+    #[Groups(['promise:read', 'api:write'])]
     private ?CampaignPromiseResultType $resultType = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 14, scale: 2, nullable: true)]
+    #[Groups(['api:write'])]
     private ?string $resultValue = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 14, scale: 2, nullable: true)]
+    #[Groups(['api:write'])]
     private ?string $objective = null;
 
     #[ORM\Column(length: 32, nullable: true)]
-    #[Groups(['promise:read'])]
+    #[Assert\Length(max: 32)]
+    #[Groups(['promise:read', 'api:write'])]
     private ?string $resultLabel = null;
 
     #[ORM\Column]
-    private ?bool $isVisible = null;
+    #[Assert\NotNull]
+    #[Groups(['promise:read', 'api:write'])]
+    private ?bool $isVisible = false;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[ApiProperty(readable: false, writable: false)]
@@ -78,7 +97,7 @@ class CampaignPromise
      * @var Collection<int, Theme>
      */
     #[ORM\ManyToMany(targetEntity: Theme::class, inversedBy: 'campaignPromises')]
-    #[Groups(['promise:read'])]
+    #[Groups(['promise:read', 'api:write'])]
     private Collection $theme;
 
     /**
@@ -251,6 +270,14 @@ class CampaignPromise
         return $this->isVisible;
     }
 
+    #[Groups(['promise:read'])]
+    #[SerializedName('isVisible')]
+    public function getIsVisible(): ?bool
+    {
+        return $this->isVisible;
+    }
+
+    #[Groups(['api:write'])]
     public function setIsVisible(bool $isVisible): static
     {
         $this->isVisible = $isVisible;

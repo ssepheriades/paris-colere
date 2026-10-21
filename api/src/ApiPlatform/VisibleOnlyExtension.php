@@ -9,9 +9,12 @@ use ApiPlatform\Metadata\Operation;
 use App\Entity\CampaignPromise;
 use App\Entity\Controversy;
 use App\Entity\ControversyItem;
+use App\Entity\KeyFigure;
 use App\Entity\Person;
 use App\Entity\Source;
+use App\Security\ApiAccess;
 use Doctrine\ORM\QueryBuilder;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 final class VisibleOnlyExtension implements QueryCollectionExtensionInterface, QueryItemExtensionInterface
 {
@@ -24,7 +27,12 @@ final class VisibleOnlyExtension implements QueryCollectionExtensionInterface, Q
         Person::class,
         ControversyItem::class,
         Source::class,
+        KeyFigure::class,
     ];
+
+    public function __construct(private readonly TokenStorageInterface $tokenStorage)
+    {
+    }
 
     /**
      * @param array<string, mixed> $context
@@ -45,11 +53,18 @@ final class VisibleOnlyExtension implements QueryCollectionExtensionInterface, Q
 
     private function filterVisible(QueryBuilder $queryBuilder, string $resourceClass): void
     {
-        if (!\in_array($resourceClass, self::RESOURCE_CLASSES, true)) {
+        if (!\in_array($resourceClass, self::RESOURCE_CLASSES, true) || $this->isApiToken()) {
             return;
         }
 
         $alias = $queryBuilder->getRootAliases()[0];
         $queryBuilder->andWhere(\sprintf('%s.isVisible = true', $alias));
+    }
+
+    private function isApiToken(): bool
+    {
+        $token = $this->tokenStorage->getToken();
+
+        return null !== $token && \in_array(ApiAccess::ROLE, $token->getRoleNames(), true);
     }
 }

@@ -3,21 +3,32 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use App\Repository\ThemeRepository;
+use App\Security\ApiAccess;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ThemeRepository::class)]
 #[ApiResource(
     operations: [
         new Get(),
         new GetCollection(),
+        new Post(security: ApiAccess::WRITE),
+        new Put(security: ApiAccess::WRITE),
+        new Patch(security: ApiAccess::WRITE),
+        new Delete(security: ApiAccess::WRITE),
     ],
     normalizationContext: ['groups' => ['theme:read']],
+    denormalizationContext: ['groups' => ['api:write']],
 )]
 class Theme
 {
@@ -28,19 +39,25 @@ class Theme
     private ?int $id = null;
 
     #[ORM\Column(length: 32)]
-    #[Groups(['theme:read', 'controversy:read', 'promise:read'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 32)]
+    #[Groups(['theme:read', 'controversy:read', 'promise:read', 'api:write'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 16, nullable: true)]
-    #[Groups(['theme:read', 'controversy:read', 'promise:read'])]
+    #[Assert\Length(max: 16)]
+    #[Groups(['theme:read', 'controversy:read', 'promise:read', 'api:write'])]
     private ?string $color = null;
 
     #[ORM\Column(length: 64, nullable: true)]
-    #[Groups(['theme:read', 'controversy:read', 'promise:read'])]
+    #[Assert\Length(max: 64)]
+    #[Groups(['theme:read', 'controversy:read', 'promise:read', 'api:write'])]
     private ?string $icon = null;
 
     #[ORM\Column(length: 128)]
-    #[Groups(['theme:read', 'controversy:read', 'promise:read'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 128)]
+    #[Groups(['theme:read', 'controversy:read', 'promise:read', 'api:write'])]
     private ?string $shortDescription = null;
 
     /**

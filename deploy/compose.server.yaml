@@ -9,6 +9,7 @@ services:
       CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-^https://paris-colere\.org$}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      API_TOKEN: ${API_TOKEN:-}
       # Pas de certificat dans le conteneur : nginx termine le TLS
       CADDY_GLOBAL_OPTIONS: auto_https off
     ports: !reset
