@@ -157,6 +157,11 @@
         <td>
             {{ form_widget(item.date) }}
             {{ form_errors(item.date) }}
+            <div class="mt-1">
+                {{ form_label(item.datePrecision, null, {label_attr: {class: 'form-label mb-0 small'}}) }}
+                {{ form_widget(item.datePrecision) }}
+                {{ form_errors(item.datePrecision) }}
+            </div>
         </td>
         <td>
             {{ form_widget(item.people) }}

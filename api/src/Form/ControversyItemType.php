@@ -6,11 +6,13 @@ use App\Entity\ControversyItem;
 use App\Entity\Person;
 use App\Entity\Source;
 use App\Enum\ControversyItemType as ItemType;
+use App\Enum\DatePrecision;
 use App\Repository\PersonRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -26,6 +28,12 @@ class ControversyItemType extends AbstractType
             ->add('date', DateType::class, [
                 'label' => false,
                 'widget' => 'single_text',
+            ])
+            ->add('datePrecision', EnumType::class, [
+                'class' => DatePrecision::class,
+                'label' => 'Précision',
+                'choice_label' => static fn (DatePrecision $precision): string => $precision->label(),
+                'help' => 'Mois : 1er du mois. Année : 1er janvier. Revenir à « jour » ne restaure pas le jour effacé.',
             ])
             ->add('people', EntityType::class, [
                 'class' => Person::class,

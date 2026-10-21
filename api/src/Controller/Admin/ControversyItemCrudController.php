@@ -40,12 +40,16 @@ class ControversyItemCrudController extends AbstractCrudController
             ->setRequired(false)
             ->hideOnIndex();
         yield ChoiceField::new('type', 'Type')
+            ->setColumns(12)
             ->setChoices([
                 'Fait' => ControversyItemType::Fact,
                 'Déclaration' => ControversyItemType::Statement,
                 'Publication' => ControversyItemType::Publication,
             ]);
-        yield DateField::new('date', 'Date');
+        yield DateField::new('date', 'Date')->setColumns(6);
+        yield ChoiceField::new('datePrecision', 'Précision')
+            ->setColumns(6)
+            ->setHelp('« Mois » enregistre le 1er du mois (« mai 2025 »), « année » le 1er janvier (« 2025 »). Revenir à « jour » ne restaure pas le jour effacé.');
         yield BooleanField::new('isVisible', 'Visible');
         yield AssociationField::new('controversy', 'Affaire')
             ->autocomplete()

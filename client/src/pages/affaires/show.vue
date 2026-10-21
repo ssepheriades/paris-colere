@@ -134,7 +134,7 @@
                 </v-card-title>
 
                 <v-card-subtitle class="affair-item-date">
-                  {{ formatItemDate(item.date) }}
+                  {{ formatEventDate(item.date, item.datePrecision) }}
                 </v-card-subtitle>
               </v-card-item>
 
@@ -251,6 +251,7 @@
   import { useContactStore } from '@/stores/contact'
   import { useControversiesStore, type Source } from '@/stores/controversies'
   import { initials, personName } from '@/stores/people'
+  import { formatEventDate } from '@/utils/formatEventDate'
 
   const route = useRoute()
   const store = useControversiesStore()
@@ -410,20 +411,6 @@
     }))
   }
 
-  function formatItemDate (value: string) {
-    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value)
-    if (!match) {
-      return value
-    }
-
-    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
-
-    return new Intl.DateTimeFormat('fr-FR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }).format(date)
-  }
 </script>
 
 <style scoped>
