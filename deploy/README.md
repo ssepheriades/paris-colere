@@ -1,6 +1,8 @@
-# Mise en production — paris-colere.org
+# Mise en production — paris-colere.org (VPS nginx)
 
-Deux variantes :
+> **Coolify (recommandé)** : voir [`../DEPLOY_COOLIFY.md`](../DEPLOY_COOLIFY.md).
+
+Deux variantes VPS :
 
 | Variante | Fichiers | Quand |
 |----------|----------|--------|

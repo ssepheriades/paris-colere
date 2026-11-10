@@ -1,0 +1,63 @@
+{
+	skip_install_trust
+
+	{$CADDY_GLOBAL_OPTIONS}
+
+	# Coolify/Traefik sits in front; trust Docker/private ranges for X-Forwarded-*.
+	servers {
+		trusted_proxies static private_ranges
+	}
+
+	frankenphp {
+		{$FRANKENPHP_CONFIG}
+	}
+}
+
+{$CADDY_EXTRA_CONFIG}
+
+{$SERVER_NAME::80} {
+	log {
+		{$CADDY_SERVER_LOG_OPTIONS}
+		format filter {
+			request>uri query {
+				replace authorization REDACTED
+			}
+		}
+	}
+
+	encode zstd br gzip
+
+	vulcain
+
+	{$CADDY_SERVER_EXTRA_DIRECTIVES}
+
+	@symfony path /api* /admin /admin/* /login /logout /bundles/* /uploads/*
+	handle @symfony {
+		root * /app/public
+
+		@phpRoute {
+			not file {path}
+		}
+		rewrite @phpRoute index.php
+
+		@frontController path index.php
+		php @frontController {
+			{$FRANKENPHP_SITE_CONFIG}
+
+			worker {
+				file ./public/index.php
+				{$FRANKENPHP_WORKER_CONFIG}
+			}
+		}
+
+		file_server {
+			hide *.php
+		}
+	}
+
+	handle {
+		root * /app/client-dist
+		try_files {path} /index.html
+		file_server
+	}
+}
