@@ -89,4 +89,5 @@ Le conteneur Postgres publie le port **5434** sur la machine, pour laisser le 54
 
 ## Production (paris-colere.org)
 
-Guide pas à pas (nginx + Docker sur Debian 12) : **[deploy/README.md](deploy/README.md)**.
+- **Coolify** (recommandé) : **[DEPLOY_COOLIFY.md](DEPLOY_COOLIFY.md)** — FrankenPHP + Postgres 18, TLS Traefik.
+- Guide VPS historique (nginx + Docker) : **[deploy/README.md](deploy/README.md)**.

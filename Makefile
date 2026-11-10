@@ -1,4 +1,4 @@
-.PHONY: serve client db db-start test docker cc dmm
+.PHONY: serve client db db-start test docker cc dmm coolify-build coolify-smoke coolify-smoke-down
 
 PG_BIN := /usr/lib/postgresql/17/bin
 PG_DATA := $(CURDIR)/.data/postgres
@@ -28,6 +28,15 @@ test: db-start
 
 docker:
 	cd api && docker compose up --wait
+
+coolify-build:
+	docker build -t paris-colere:coolify .
+
+coolify-smoke:
+	docker compose -f deploy/coolify/compose.smoke.yaml up --build --wait
+
+coolify-smoke-down:
+	docker compose -f deploy/coolify/compose.smoke.yaml down -v
 
 cc:
 	cd api && php bin/console cache:clear

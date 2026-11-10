@@ -1,0 +1,41 @@
+.git
+.github
+.data
+**/.DS_Store
+**/*.md
+!DEPLOY_COOLIFY.md
+**/Thumbs.db
+
+# Local / VPS deploy artefacts (Coolify uses root Dockerfile)
+deploy/.env
+deploy/nginx
+deploy/scripts
+deploy/compose.*.yaml
+deploy/README.md
+
+# API — keep sources, drop local noise
+api/var
+api/vendor
+api/tests
+api/frankenphp/Caddyfile
+api/frankenphp/Caddyfile.prod
+api/compose.yaml
+api/compose.override.yaml
+api/compose.prod.yaml
+api/Dockerfile
+api/.dockerignore
+api/.env.local
+api/.env.*.local
+api/.phpunit.result.cache
+api/public/bundles
+api/public/uploads
+
+# Client — install deps in image
+client/node_modules
+client/dist
+client/.vscode
+
+# Dev tooling
+Makefile
+package-lock.json
+.gitignore
